@@ -13,7 +13,7 @@ class TabularExplainer(Explainer):
         pass
 
     @abstractmethod
-    def explain(self, b, y):
+    def explain(self, b, x):
         pass
 
 
