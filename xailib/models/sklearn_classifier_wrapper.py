@@ -3,6 +3,7 @@ from xailib.models.bbox import AbstractBBox
 
 class sklearn_classifier_wrapper(AbstractBBox):
     def __init__(self, classifier):
+        super().__init__()
         self.bbox = classifier
 
     def predict(self, X):

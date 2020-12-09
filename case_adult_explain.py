@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
 from lore.datamanager import prepare_dataset
+from xailib.explainers.lime_explainer import LimeXAITabularExplainer
 from xailib.explainers.lore_explainer import LoreTabularExplainer
 from xailib.models.sklearn_classifier_wrapper import sklearn_classifier_wrapper
 
@@ -31,14 +32,21 @@ if __name__ == '__main__':
     # Build a wrapper aroung the bbox
     bbox = sklearn_classifier_wrapper(bb)
 
-    # Create the explainer
+    inst = df[feature_names].values[18]
+    print(inst, bbox.predict(inst.reshape(1, -1)))
+
+    # Create an explainer: LORE
     explainer = LoreTabularExplainer(bbox)
     # let the explainer to scan the training or test set
     explainer.fit(df, class_field)
 
-    inst = df[feature_names].values[18]
-    print(inst, bbox.predict(inst.reshape(1, -1)))
-
-    print('build an explanation')
+    print('building an explanation')
     exp = explainer.explain(inst)
     print(exp)
+
+    # Use another explainer: LIME
+    limeExplainer = LimeXAITabularExplainer(bbox)
+    limeExplainer.fit(df, class_field)
+
+    lime_exp = limeExplainer.explain(inst)
+    print(lime_exp.as_list())

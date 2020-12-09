@@ -12,7 +12,7 @@ class Explainer(ABC):
         pass
 
     @abstractmethod
-    def explain(self, b, x):
+    def explain(self, x):
         pass
 
 
