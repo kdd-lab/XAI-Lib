@@ -2,9 +2,10 @@ import pandas as pd
 from matplotlib.pyplot import figure
 from xailib.models.bbox import AbstractBBox
 from xailib.xailib_tabular import TabularExplainer
-from externals.LORE.datamanager import prepare_dataset
 import shap
+import matplotlib.pyplot as plt
 shap.initjs
+
 
 class NoExplainerFound(Exception):
 
@@ -38,7 +39,20 @@ class ShapXAITabularExplainer(TabularExplainer):
         exp = self.shap_explainer.shap_values(x)
         return exp
 
-    '''def force_plot(self, x, x_index):
-        figure(num=None, figsize=(3, 4), dpi=100)
-        shap.force_plot(self.shap_explainer.expected_value[0], self.shap_explainer.shap_values(x)[0], x, matplotlib=True)
-        figure.show()'''
+    def expected_value(self, val):
+        if val == -1:
+            return self.shap_explainer.expected_value
+        else:
+            return self.shap_explainer.expected_value[val]
+
+    def plot_shap_values(self, feature_names, exp, range_start, range_end):
+        plt.rcParams.update({'font.size': 20})
+        plt.figure(figsize=(10, 8))
+        plt.bar(feature_names[range_start:range_end], exp[range_start:range_end], facecolor='lightblue', width=0.5)
+        # You can specify a rotation for the tick labels in degrees or with keywords.
+        plt.xticks(feature_names[range_start:range_end], rotation='vertical')
+        # Pad margins so that markers don't get clipped by the axes
+        plt.margins(0.1)
+        # Tweak spacing to prevent clipping of tick-labels
+        plt.subplots_adjust(bottom=0.25)
+        plt.show()

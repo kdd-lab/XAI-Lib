@@ -9,7 +9,7 @@ class TabularExplainer(Explainer):
         super().__init__()
 
     @abstractmethod
-    def fit(self, X, y):
+    def fit(self, X, y, config):
         pass
 
     @abstractmethod
