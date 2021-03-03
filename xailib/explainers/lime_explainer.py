@@ -29,6 +29,7 @@ class LimeXAITabularExplainer(TabularExplainer):
                                                    kernel=kernel)
 
 
+
     def explain(self, x):
         exp = self.lime_explainer.explain_instance(x, self.bb.predict_proba)
         return exp
@@ -46,3 +47,34 @@ class LimeXAITabularExplainer(TabularExplainer):
         # Tweak spacing to prevent clipping of tick-labels
         plt.subplots_adjust(bottom=0.25)
         plt.show()
+
+
+
+class LimeXAIImageExplainer(ImageExplainer):
+    lime_explainer = None
+
+    def __init__(self, bb: AbstractBBox):
+        super().__init__()
+        self.bb = bb
+
+    def wrapper(self, x):
+        return self.bb.predict(x/255)
+
+    def fit(self):
+        self.lime_explainer = LimeImageExplainer(verbose = False)
+
+    def explain(self, x, top_labels=5, num_samples=2000):
+        if x.dtype != 'int':
+            exp = self.lime_explainer.explain_instance((x*255).astype(int),
+                                                       self.wrapper,
+                                                       top_labels=top_labels,
+                                                       hide_color=0,
+                                                       num_samples=num_samples)
+        else:
+            exp = self.lime_explainer.explain_instance(x,
+                                                       self.bb.predict,
+                                                       top_labels=top_labels,
+                                                       hide_color=0,
+                                                       num_samples=num_samples)
+
+        return exp

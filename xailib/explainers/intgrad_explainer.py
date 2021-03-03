@@ -45,7 +45,7 @@ class IntgradImageExplainer(ImageExplainer):
         self.config['baseline'] = baseline
         self.config['target_index'] = class_name
 
-    @tf.function  # disable eager execution for faster run time
+    #@tf.function  # disable eager execution for faster run time, however using this decorator could lead to a memory leak if you create a newer model evry iteration see https://github.com/tensorflow/tensorflow/issues/42441 for further information
     def compute_scores(self,
                        x,  # input image
                        target_class_idx,  # target class to generate the saliency map
