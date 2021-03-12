@@ -2,8 +2,11 @@ import pandas as pd
 
 from xailib.models.bbox import AbstractBBox
 from xailib.xailib_tabular import TabularExplainer
-from externals.LORE.datamanager import prepare_dataset
+from xailib.xailib_image import ImageExplainer
+#from externals.LORE.datamanager import prepare_dataset
 from lime.lime_tabular import LimeTabularExplainer
+from lime.lime_image import LimeImageExplainer
+
 import matplotlib.pyplot as plt
 
 class LimeXAITabularExplainer(TabularExplainer):
