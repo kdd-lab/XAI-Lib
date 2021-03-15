@@ -3,7 +3,7 @@ import pandas as pd
 from xailib.models.bbox import AbstractBBox
 from xailib.xailib_tabular import TabularExplainer
 from xailib.xailib_image import ImageExplainer
-#from externals.LORE.datamanager import prepare_dataset
+from externals.lore.datamanager import prepare_dataset
 from lime.lime_tabular import LimeTabularExplainer
 from lime.lime_image import LimeImageExplainer
 

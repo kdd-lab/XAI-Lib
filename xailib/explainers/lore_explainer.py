@@ -1,8 +1,8 @@
 from xailib.xailib_tabular import TabularExplainer
 from xailib.models.bbox import AbstractBBox
 import pandas as pd
-from externals.LORE.datamanager import prepare_dataset
-from externals.LORE.lore.lorem import LOREM
+from externals.lore.datamanager import prepare_dataset
+from externals.lore.lore.lorem import LOREM
 
 class LoreTabularExplainer(TabularExplainer):
     lore_explainer = None
