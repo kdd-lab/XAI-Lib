@@ -76,6 +76,9 @@ class Autoencoder(object):
         return self.img_denormalize(self.discriminator.predict(self.img_normalize(X)))
 
     def sample_images(self, epoch):
+        """
+        save some sample images to test if the autoencoder has trained correctly
+        """
         r, c = 5, 5
 
         z = np.random.normal(size=(r*c, self.latent_dim))
@@ -96,6 +99,9 @@ class Autoencoder(object):
         plt.close()
 
     def save_model(self):
+        """
+        save the weights in the path specified by name and path arguments
+        """
         save(self.encoder, '%s_encoder' % self.name, self.path)
         save(self.decoder, '%s_decoder' % self.name, self.path)
         save(self.autoencoder, '%s_autoencoder' % self.name, self.path)

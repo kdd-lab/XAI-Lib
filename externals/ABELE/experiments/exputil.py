@@ -17,7 +17,7 @@ from tensorflow.keras.layers import Dense, Dropout, Flatten
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Activation
 from tensorflow.keras.datasets import mnist, cifar10, fashion_mnist
 
-from ..autoencoders.adversarial import AdversarialAutoencoderMnist, AdversarialAutoencoderCifar10
+from ..autoencoders.adversarial import AdversarialAutoencoderMnist, AdversarialAutoencoderCifar10, Image_AdversarialAutoencoder
 from ..autoencoders.variational import VariationalAutoencoderMnist, VariationalAutoencoderCifar10
 
 import warnings
@@ -29,6 +29,10 @@ def rgb2gray(rgb):
 
 
 def get_dataset(dataset):
+    """
+    Utility to load the most common datasets
+    Dataset supported ['mnist','cifar10','cifar10bw','fashion']
+    """
     if dataset == 'mnist':
         (X_train, Y_train), (X_test, Y_test) = mnist.load_data()
         X_train = np.stack([gray2rgb(x) for x in X_train.reshape((-1, 28, 28))], 0)
@@ -191,7 +195,19 @@ def train_black_box(X_train, Y_train, dataset, black_box, black_box_filename, us
         return -1
 
 
-def get_autoencoder(X, ae_name, dataset, path_aemodels):
+def get_autoencoder(X, ae_name, path_aemodels, dataset='other', latent_dim=None, hidden_dim=None, num_filters=None, use_rgb=None):
+    """
+     Get_autoencoder create the autoencoder class to train
+     Arguments: 
+        X: dataset to use to train the ae 
+        ae_name: type of the autoencoder to train, only adversarial autoencoder (aae) and variational autoencoder (vae) are supported
+        path_aemodels: path where to save the weights
+        dataset: name of the dataset to use
+        OPTIONAL
+        latent_dim: latent space dimension (only use if dataset is custom)
+        hidden_dim: hidden dimension of the autoencoders layers (ex: 1024 will create a layer of 1024 hidden units) (only use if dataset is custom)
+        num_filters: number of filter to use in the convolutional layers (only use if dataset is custom)
+    """
     shape = X[0].shape
     input_dim = np.prod(X[0].shape)
     verbose = True
@@ -199,28 +215,32 @@ def get_autoencoder(X, ae_name, dataset, path_aemodels):
 
     if dataset == 'mnist':
         latent_dim = 4
+        hidden_dim = 1024
     elif dataset == 'fashion':
         latent_dim = 8
+        hidden_dim = 1024
     elif dataset == 'cifar10':
         latent_dim = 16
+        hidden_dim = 128
     elif dataset == 'cifar10bw':
         latent_dim = 16
-    else:
-        return
+        hidden_dim = 1024
 
     name = '%s_%s_%d' % (ae_name, dataset, latent_dim)
 
     if ae_name == 'aae':
         if dataset in ['mnist', 'fashion', 'cifar10bw']:
             ae = AdversarialAutoencoderMnist(shape=shape, input_dim=input_dim, latent_dim=latent_dim,
-                                             hidden_dim=1024, verbose=verbose, store_intermediate=store_intermediate,
+                                             hidden_dim=hidden_dim, verbose=verbose, store_intermediate=store_intermediate,
                                              path=path_aemodels, name=name)
         elif dataset in ['cifar10']:
             ae = AdversarialAutoencoderCifar10(shape=shape, input_dim=input_dim, latent_dim=latent_dim,
-                                               hidden_dim=128, verbose=verbose, store_intermediate=store_intermediate,
+                                               hidden_dim=hidden_dim, verbose=verbose, store_intermediate=store_intermediate,
                                                path=path_aemodels, name=name)
         else:
-            return -1
+            ae = Image_AdversarialAutoencoder(shape=shape, input_dim=input_dim, latent_dim=latent_dim,
+                                             hidden_dim=hidden_dim, num_filters=num_filters, verbose=verbose, store_intermediate=store_intermediate,
+                                             path=path_aemodels, name=name, use_rgb=use_rgb)
 
     elif ae_name == 'vae':
         if dataset in ['mnist', 'fashion']:
@@ -229,7 +249,7 @@ def get_autoencoder(X, ae_name, dataset, path_aemodels):
 
         elif dataset in ['cifar10']:
             ae = VariationalAutoencoderCifar10(shape=shape, input_dim=input_dim, latent_dim=latent_dim,
-                                               hidden_dim=128, verbose=verbose, store_intermediate=store_intermediate,
+                                               hidden_dim=hidden_dim, verbose=verbose, store_intermediate=store_intermediate,
                                                path=path_aemodels, name=name)
 
         else:

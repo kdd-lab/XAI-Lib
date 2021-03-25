@@ -57,6 +57,12 @@ class ImageExplanation(Explanation):
         self.limg = self.autoencoder.encode(np.array([img]))[0]
 
     def get_image_rule(self, features=None, samples=10, for_show=True):
+        """
+        Arguments:
+            features: [None] list of which feature of the latent space to use, If None use all
+            samples: [10] number of prototype to use
+        Return the image and the difference between the prototypes
+        """
 
         img2show = np.copy(self.img)
         prototypes, diff_list = self.get_prototypes_respecting_rule(num_prototypes=samples, features=features,
@@ -68,8 +74,20 @@ class ImageExplanation(Explanation):
 
     def get_prototypes_respecting_rule(self, num_prototypes=5, return_latent=False, return_diff=False, features=None,
                                        max_attempts=100000):
+        """
+        Return the prototypes images
+        Arguments:
+            num_prototypes: [5] number of prototypes to return
+            return_latent: [False] if True return latent representation
+            return_diff: [False] If True return the difference with the query image
+            features: [None] list of the features int he latent space to use, if none use all
+        """
         img2show = np.copy(self.img)
-        timg = rgb2gray(img2show) if not self.use_rgb else img2show
+        if not self.use_rgb:
+            if len(img2show.shape)==3:
+                img2show = img2show[:,:,0]
+            timg = gray2rgb(img2show)
+        else: timg = img2show
 
         features = [i for i in range(self.autoencoder.latent_dim)] if features is None else features
         all_features = [i for i in range(self.autoencoder.latent_dim)]
@@ -89,11 +107,13 @@ class ImageExplanation(Explanation):
                 pimg = self.autoencoder.decode(lpimg.reshape(1, -1))[0]
                 bbo = self.bb_predict(np.array([pimg]))[0]
                 if bbo == self.bb_pred:
-                    pimg = rgb2gray(pimg) if not self.use_rgb else pimg
+                    if not self.use_rgb:
+                        if len(pimg.shape)==3:
+                            pimg = pimg[:,:,0]
+                        pimg = gray2rgb(pimg)
                     diff = timg - pimg
                     diff = (diff - np.min(diff)) / (np.max(diff) - np.min(diff)) * 255
-                    diff = np.mean(diff, 2) if self.use_rgb else diff
-                    # diff = rgb2gray(diff) if self.use_rgb else diff
+                    diff = np.mean(diff, 2)
 
                     values, counts = np.unique(np.abs(diff), return_counts=True)
                     sorted_counts = sorted(counts, reverse=True)
@@ -118,7 +138,7 @@ class ImageExplanation(Explanation):
                     # print(np.where((th_val_l <= diff) & (diff <= th_val)))
                     diff[np.where((th_val_l <= diff) & (diff <= th_val_u))] = 127.5
 
-                    prototypes.append(gray2rgb(pimg))
+                    prototypes.append(pimg)
                     lprototypes.append(lpimg)
                     diff_masks.append(diff)
 
@@ -134,6 +154,9 @@ class ImageExplanation(Explanation):
         return prototypes
 
     def get_counterfactual_prototypes(self, eps=0.01, interp=0):
+        """
+        Return the couterfactuals satisfying the counterfactual rule
+        """
 
         if interp in [0, 1, 2, None, False]:
             cprototypes = list()
@@ -185,7 +208,11 @@ class ImageExplanation(Explanation):
     def get_prototypes_not_respecting_rule(self, num_prototypes=5, return_latent=False, return_diff=False,
                                            features=None, max_attempts=100000):
         img2show = np.copy(self.img)
-        timg = rgb2gray(img2show) if not self.use_rgb else img2show
+        if not self.use_rgb:
+            if len(img2show.shape)==3:
+                img2show = img2show[:,:,0]
+            timg = gray2rgb(img2show)
+        else: timg = img2show
 
         features = [i for i in range(self.autoencoder.latent_dim)] if features is None else features
         all_features = [i for i in range(self.autoencoder.latent_dim)]
@@ -205,11 +232,14 @@ class ImageExplanation(Explanation):
                 pimg = self.autoencoder.decode(lpimg.reshape(1, -1))[0]
                 bbo = self.bb_predict(np.array([pimg]))[0]
                 if bbo != self.bb_pred:
-                    pimg = rgb2gray(pimg) if not self.use_rgb else pimg
+                    if not self.use_rgb:
+                        if len(pimg.shape)==3:
+                            pimg = pimg[:,:,0]
+                        pimg = gray2rgb(pimg)
                     diff = timg - pimg
                     diff = (diff - np.min(diff)) / (np.max(diff) - np.min(diff)) * 255
-                    diff = np.mean(diff, 2) if self.use_rgb else diff
-                    # diff = rgb2gray(diff) if self.use_rgb else diff
+                    diff = np.mean(diff, 2) 
+                    diff = rgb2gray(diff) 
 
                     values, counts = np.unique(np.abs(diff), return_counts=True)
                     sorted_counts = sorted(counts, reverse=True)
@@ -224,7 +254,7 @@ class ImageExplanation(Explanation):
 
                     diff[np.where((th_val_l <= diff) & (diff <= th_val_u))] = 127.5
 
-                    prototypes.append(gray2rgb(pimg))
+                    prototypes.append(pimg)
                     lprototypes.append(lpimg)
                     diff_masks.append(diff)
 

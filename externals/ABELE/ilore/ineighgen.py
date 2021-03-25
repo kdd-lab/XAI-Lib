@@ -225,7 +225,6 @@ class ImageGeneticAdversarialGeneratorLatent(ImageAdversarialGeneratorLatent):
         lZ_img = np.concatenate((lZ_eq, lZ_noteq), axis=0)
         # print('Latent space')
         # print(lZ_img[:5])
-
         Z_img = self.autoencoder.decode(lZ_img)
         Z_img[0] = img.copy()
         # print('Real space')

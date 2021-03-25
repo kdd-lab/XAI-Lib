@@ -42,10 +42,15 @@ class IntgradImageExplainer(ImageExplainer):
         super().__init__()
 
     def fit(self, class_name, baseline='black', _df=None):
+        """
+        Arguments:
+            class_name:
+            baseline: baseline image to use as reference (supported types: "white", "black", np.array)
+        """
         self.config['baseline'] = baseline
         self.config['target_index'] = class_name
 
-    #@tf.function  # disable eager execution for faster run time, however using this decorator could lead to a memory leak if you create a newer model evry iteration see https://github.com/tensorflow/tensorflow/issues/42441 for further information
+    #@tf.function  # disable eager execution for faster run time, however using this decorator could lead to a memory leak if you create a newer model every iteration see https://github.com/tensorflow/tensorflow/issues/42441 for further information
     def compute_scores(self,
                        x,  # input image
                        target_class_idx,  # target class to generate the saliency map

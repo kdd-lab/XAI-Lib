@@ -6,6 +6,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Input, Dense, Lambda, Flatten, Reshape, LeakyReLU
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, MaxPooling2D, UpSampling2D, BatchNormalization, Activation
+import tensorflow as tf
 
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.datasets import mnist
@@ -65,7 +66,7 @@ class AdversarialAutoencoder(Autoencoder):
 
         # The adversarial_autoencoder model  (stacked generator and discriminator)
         self.autoencoder = Model(x, [tx, validity])
-
+        
         self.autoencoder.compile(loss=['mse', 'binary_crossentropy'], loss_weights=[0.999, 0.001], optimizer=optimizer)
         if self.verbose:
             self.autoencoder.summary()
@@ -77,6 +78,14 @@ class AdversarialAutoencoder(Autoencoder):
             plot_model(self.discriminator, to_file='%s%s_discriminator.png' % (self.path, self.name))
 
     def fit(self, X, epochs=30000, batch_size=128, sample_interval=100):
+        """
+         Fit method
+         Arguments: 
+            X: Dataset to use to train the ae
+            epochs: Epochs to train
+            batch_size: size of the batch
+            sample interval: Save a sample of reconstructed images on the weights folder every sample_interval epochs
+        """
 
         self.init()
         X = self.img_normalize(X)
@@ -299,6 +308,75 @@ class AdversarialAutoencoderCifar10(AdversarialAutoencoder):
 
         return Model(encoded_repr, validity)
 
+class Image_AdversarialAutoencoder(AdversarialAutoencoder):
+
+    def __init__(self, shape, input_dim, latent_dim, hidden_dim, num_filters, use_rgb=True, alpha=0.2, verbose=False,
+                 store_intermediate=False, save_graph=False, path='./', name='aae'):
+        super(Image_AdversarialAutoencoder, self).__init__(shape, input_dim, latent_dim, hidden_dim, alpha, verbose,
+                                                            store_intermediate, save_graph, path, name)
+        self.use_rgb = use_rgb
+        self.num_filters = 32
+    
+    def img_normalize(self, X):
+        return X
+    def img_denormalize(self, X):
+        return X
+    
+    def build_encoder(self):
+
+        x = Input(shape=self.shape)
+        h = Conv2D(self.num_filters, kernel_size=(2, 2), padding='same', activation='relu', strides=(2, 2))(x)
+        h = Conv2D(self.num_filters, kernel_size=3, padding='same', activation='relu', strides=1)(h)
+        h = Conv2D(self.num_filters, kernel_size=3, padding='same', activation='relu', strides=1)(h)
+        self.conv_dim = h.shape[-3:]
+        h = Flatten()(h)
+        h = Dense(self.hidden_dim, activation='relu')(h)
+        mu = Dense(self.latent_dim)(h)
+        log_var = Dense(self.latent_dim)(h)
+        lx = Lambda(sampling)([mu, log_var])
+
+        model = Model(x, lx)
+        if self.verbose:
+            model.summary()
+
+        return model
+
+    def build_decoder(self):
+
+        lx = Input(shape=(self.latent_dim,))
+
+        h = Dense(self.hidden_dim, activation='relu')(lx)
+        h = Dense(self.conv_dim[0]*self.conv_dim[1]*self.conv_dim[2], activation='relu')(h)
+        h = Reshape((self.conv_dim[0], self.conv_dim[1], self.conv_dim[2]))(h)
+        
+        h = Conv2DTranspose(self.num_filters, kernel_size=3, padding='same', strides=1, activation='relu')(h)
+        h = Conv2DTranspose(self.num_filters, kernel_size=3, padding='same', strides=1, activation='relu')(h)
+        if self.use_rgb:
+            h = Conv2DTranspose(3, kernel_size=(2, 2), strides=(2, 2), padding='same', activation='sigmoid')(h)
+        else:
+            h = Conv2DTranspose(1, kernel_size=(2, 2), strides=(2, 2), padding='same', activation='sigmoid')(h)
+        
+        model = Model(lx, h)
+        if self.verbose:
+            model.summary()
+
+        return model
+
+    def build_discriminator(self):
+
+        model = Sequential()
+        model.add(Dense(self.hidden_dim, input_dim=self.latent_dim))
+        model.add(LeakyReLU(alpha=self.alpha))
+        model.add(Dense(self.hidden_dim//2))
+        model.add(LeakyReLU(alpha=self.alpha))
+        model.add(Dense(1, activation='sigmoid'))
+        if self.verbose:
+            model.summary()
+
+        encoded_repr = Input(shape=(self.latent_dim, ))
+        validity = model(encoded_repr)
+
+        return Model(encoded_repr, validity)
 
 def main():
 

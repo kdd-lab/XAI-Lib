@@ -21,11 +21,43 @@ def default_kernel(d, kernel_width):
 
 
 class ILOREM(object):
+    """
+    I(mage) LOREM is an adaptation of LOREM to Images
+    """
 
     def __init__(self, bb_predict, class_name, class_values, neigh_type='lime', ocr=0.1,
                  kernel_width=None, kernel=None, autoencoder=None, use_rgb=True, scale=False, valid_thr=0.5,
                  filter_crules=True, random_state=0, verbose=False, **kwargs):
-
+        """
+        Arguments:
+            bb_predict: function which return the prediction of the blackbox in form index of the class 
+            class_name: name of the class used when printing rules (class_name: class_value)
+            class_values: list of names of the classes (class_name: class_value)
+            neigh_type: select the nighbourhood type,
+                        supportecd types:
+                        'gnt' : genetic
+                        'rnd' : random
+                        'hrg' : hybrid-random-genetic
+                        'gntp': genetic probabilistic
+                        'hrgp': hybrid probabilistic
+            ocr: [0.1] other class values, ratio of other class from the one predicted in the neighbourhood
+            kernel: [None] Kernel to weights the point in the nieghbourhood
+            kernel_width : [None]  
+            autoencoder: Autoencoder to generate the latent space points
+            use_rgb = [True] Set to True if the input images are rgb, False for grayscale
+            filter_crules: [None] if True Prototypes are checked by the black box to be the same class of the query image
+            random_state: set the seed of the random state
+            verbose: True if you want to print more informations
+            NEIGHBOURHOOD PARAMETERS: the following parameters are Neighbourhood specific and may not apply to all of the neighbourhood types
+                valid_thr: [0.5] threshold to change class in the autoencoder disciminator
+                alpha1: [0.5] weight of the feature similarity of the neighbourhood points
+                alpha2: [0.5] weight of the target similarity of the neighbourhood points
+                ngen: [100] number of generations of the genetic algorithm
+                mutpb: [0.2] The probability of mutating an individual in the genetic algorithm
+                cxpb: [0.5] The probability of mating two individuals in the genetic algorithm
+                tournsize: [3] number of tournaments in the genetic algorithm
+                hallooffame_ratio: [0.1] Fraction of exemplars to keep at every genetic generation
+        """
         np.random.seed(random_state)
         self.bb_predict = bb_predict
         self.class_name = class_name
@@ -47,6 +79,21 @@ class ILOREM(object):
         self.__init_neighbor_fn(kwargs)
 
     def explain_instance(self, img, num_samples=1000, use_weights=True, metric='euclidean'):
+        """
+        generate an explanation for a given image
+        Arguments:
+            img: the image to explain
+            num_samples: [1000] number of samples to generate with the neighbourhood algorithm
+            use_weights: [True] if weights the points using distance
+        Return:
+        Explanation object compose by several things
+            rstr: string describing the rule
+            cstr: string describing the counterfactual rule
+            bb_pred: black box prediction of the image
+            dt_pred: decisoon tree prediction
+            fidelity: fidelity between black box and the decision tree
+            limg: latent space representation of the image
+        """
 
         if self.verbose:
             print('generating neighborhood - %s' % self.neigh_type)
@@ -115,7 +162,7 @@ class ILOREM(object):
 
         if self.neigh_type in ['rnd']:  # random autoencoder
 
-            self.neighgen = ImageRandomAdversarialGeneratorLatent(self.bb_predict, ocr=0.1,
+            self.neighgen = ImageRandomAdversarialGeneratorLatent(self.bb_predict, ocr=self.ocr,
                                                                   autoencoder=self.autoencoder,
                                                                   min_width=1, min_height=1, scale=self.scale,
                                                                   valid_thr=self.valid_thr)
@@ -131,7 +178,7 @@ class ILOREM(object):
             halloffame_ratio = kwargs.get('halloffame_ratio', 0.1)
 
             if self.neigh_type in ['gnt']:    # genetic autoencoder latent
-                self.neighgen = ImageGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=0.1,
+                self.neighgen = ImageGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=self.ocr,
                                                                        autoencoder=self.autoencoder,
                                                                        min_width=1, min_height=1, scale=self.scale,
                                                                        valid_thr=self.valid_thr, alpha1=alpha1,
@@ -144,7 +191,7 @@ class ILOREM(object):
 
             elif self.neigh_type in ['hrg']:     # hybryd random genetic autoencoder latent
 
-                self.neighgen = ImageRandomGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=0.1,
+                self.neighgen = ImageRandomGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=self.ocr,
                                                                              autoencoder=self.autoencoder,
                                                                              min_width=1, min_height=1,
                                                                              scale=self.scale, valid_thr=self.valid_thr,
@@ -158,7 +205,7 @@ class ILOREM(object):
             elif self.neigh_type in ['gntp']:  # probabilistic genetic autoencoder
                 bb_predict_proba = kwargs.get('bb_predict_proba', None)
 
-                self.neighgen = ImageProbaGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=0.1,
+                self.neighgen = ImageProbaGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=self.ocr,
                                                                             autoencoder=self.autoencoder,
                                                                             min_width=1, min_height=1, scale=self.scale,
                                                                             valid_thr=self.valid_thr,
@@ -173,7 +220,7 @@ class ILOREM(object):
             elif self.neigh_type in ['hrgp']:  # probabilistic genetic autoencoder
                 bb_predict_proba = kwargs.get('bb_predict_proba', None)
 
-                self.neighgen = ImageRandomProbaGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=0.1,
+                self.neighgen = ImageRandomProbaGeneticAdversarialGeneratorLatent(self.bb_predict, ocr=self.ocr,
                                                                                   autoencoder=self.autoencoder,
                                                                                   min_width=1, min_height=1,
                                                                                   scale=self.scale,
