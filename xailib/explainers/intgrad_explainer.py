@@ -227,12 +227,3 @@ class PT_IntgradImageExplainer(ImageExplainer):
         else:
             raise Exception('baseline method not supported')
         return attributions
-            
-            
-    def visualise(self, attirbutions):
-        img_integrated_gradient_overlay = visualize(attributions, img, clip_above_percentile=99, clip_below_percentile=0, \
-                                                    overlay=True, mask_mode=True)
-        img_integrated_gradient = visualize(attributions, img, clip_above_percentile=99, clip_below_percentile=0, overlay=False)
-        output_img = generate_entrie_images(img, img_gradient, img_gradient_overlay, img_integrated_gradient, \
-                                            img_integrated_gradient_overlay)
-        cv2.imwrite('results/' + args.model_type + '/' + args.img, np.uint8(output_img))
