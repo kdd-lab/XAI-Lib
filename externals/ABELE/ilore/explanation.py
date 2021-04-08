@@ -59,8 +59,8 @@ class ImageExplanation(Explanation):
     def get_image_rule(self, features=None, samples=10, for_show=True):
         """
         Arguments:
-            features: [None] list of which feature of the latent space to use, If None use all
-            samples: [10] number of prototype to use
+            features: list of which feature of the latent space to use, If None use all
+            samples: number of prototype to use
         Return the image and the difference between the prototypes
         """
 
@@ -77,10 +77,10 @@ class ImageExplanation(Explanation):
         """
         Return the prototypes images
         Arguments:
-            num_prototypes: [5] number of prototypes to return
-            return_latent: [False] if True return latent representation
-            return_diff: [False] If True return the difference with the query image
-            features: [None] list of the features int he latent space to use, if none use all
+            num_prototypes: number of prototypes to return
+            return_latent: if True return latent representation
+            return_diff: If True return the difference with the query image
+            features: list of the features int he latent space to use, if none use all
         """
         img2show = np.copy(self.img)
         if not self.use_rgb:

@@ -40,12 +40,12 @@ class ILOREM(object):
                         'hrg' : hybrid-random-genetic
                         'gntp': genetic probabilistic
                         'hrgp': hybrid probabilistic
-            ocr: [0.1] other class values, ratio of other class from the one predicted in the neighbourhood
-            kernel: [None] Kernel to weights the point in the nieghbourhood
-            kernel_width : [None]  
+            ocr: other class values, ratio of other class from the one predicted in the neighbourhood
+            kernel: Kernel to weights the point in the nieghbourhood
+            kernel_width : Width of the kernel  
             autoencoder: Autoencoder to generate the latent space points
-            use_rgb = [True] Set to True if the input images are rgb, False for grayscale
-            filter_crules: [None] if True Prototypes are checked by the black box to be the same class of the query image
+            use_rgb =  Set to True if the input images are rgb, False for grayscale
+            filter_crules: if True Prototypes are checked by the black box to be the same class of the query image
             random_state: set the seed of the random state
             verbose: True if you want to print more informations
             NEIGHBOURHOOD PARAMETERS: the following parameters are Neighbourhood specific and may not apply to all of the neighbourhood types
@@ -83,8 +83,8 @@ class ILOREM(object):
         generate an explanation for a given image
         Arguments:
             img: the image to explain
-            num_samples: [1000] number of samples to generate with the neighbourhood algorithm
-            use_weights: [True] if weights the points using distance
+            num_samples: number of samples to generate with the neighbourhood algorithm
+            use_weights: if weights the points using distance
         Return:
         Explanation object compose by several things
             rstr: string describing the rule
