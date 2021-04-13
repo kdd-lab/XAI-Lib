@@ -6,36 +6,36 @@ import tensorflow as tf
 import torch
 
 class IntgradImageExplainer(ImageExplainer):
-    def __init__(self, bb: AbstractBBox):
+    def __init__(self, bb:AbstractBBox):
         self.bb = bb
         super().__init__()
         
     def fit(self):
         return
     
-    def explain(self, image, index_to_explain, baseline, preprocessing=None, steps=50, model_type='tensorflow', cuda=False):
+    def explain(self, image, index_to_explain, baseline, preprocessing, predict, steps=50, model_type='tensorflow', cuda=False):
         """
-        image: image to explain passed as tensor
+        image: image to explain
         index_to_explain: Which class index of the prediciton to explain, if None the most probable will be selected
         baseline: baseline to use as reference. Possible choices are ['white', 'black', 'half', 'random']
             - white will use a white image as baseline
             - black will use a black one
             - half will average a white and a black one
             - random will use random color pixels
-        preprocessing: function that takes as input an image with rgb values 255 and return an image formatted aas the black box needs
+        preprocessing: function that takes as input a list of rgb images (shape HxWxC, format int, range (0,255)) and return the correct format for the black box
+        predict: function that takes as input the output of preprocessing function and return the prediction of the black with shape (-1,1)
         steps: number of images to use to produce the saliency map
         model_type: library used for your blackbox: tensorflow or pytorch 
         cuda: set to True if your model runs on GPU
         """
-        if preprocessing==None:
-            self.preprocessing = lambda x : x
-        else:
-            self.preprocessing = preprocessing
+        
+        self.preprocessing = preprocessing
+        self.predict = predict
             
         if model_type=='tensorflow':
-            attributions = self.tensorflow_explain(image=image, index_to_explain=index_to_explain, baseline=baseline, preprocessing=self.preprocessing, steps=steps, cuda=cuda)
+            attributions = self.tensorflow_explain(image=image, index_to_explain=index_to_explain, baseline=baseline, steps=steps, cuda=cuda)
         elif model_type=='pytorch':
-            attributions = self.pytorch_explain(image=image, index_to_explain=index_to_explain, baseline=baseline, preprocessing=self.preprocessing, steps=steps, cuda=cuda)
+            attributions = self.pytorch_explain(image=image, index_to_explain=index_to_explain, baseline=baseline, steps=steps, cuda=cuda)
         else:
             raise Exception('Model Type not Understood')
         return attributions
@@ -52,11 +52,10 @@ class IntgradImageExplainer(ImageExplainer):
         return images
 
     @staticmethod
-    def compute_gradients(images, target_class_idx, model):
+    def compute_gradients(images, target_class_idx, predict):
         with tf.GradientTape() as tape:
             tape.watch(images)
-            logits = model(images)
-            probs = tf.nn.softmax(logits, axis=-1)[:, target_class_idx]
+            probs = predict(images)[:, target_class_idx]
             return tape.gradient(probs, images)
 
     @staticmethod
@@ -89,7 +88,7 @@ class IntgradImageExplainer(ImageExplainer):
             # 3. Compute gradients between model outputs and interpolated inputs.
             gradient_batch = self.compute_gradients(images=interpolated_path_input_batch,
                                                     target_class_idx=target_class_idx,
-                                                    model=self.bb)
+                                                    predict=self.predict)
             # Write batch indices and gradients to extend TensorArray.
             gradient_batches = gradient_batches.scatter(tf.range(from_, to), gradient_batch)    
         # Stack path gradients together row-wise into single tensor.
@@ -100,28 +99,26 @@ class IntgradImageExplainer(ImageExplainer):
         integrated_gradients = (x - baseline) * avg_gradients
         return integrated_gradients
 
-    def tensorflow_explain(self, image, index_to_explain, baseline, preprocessing, steps=50, cuda=False):
-        if index_to_explain==None:
-            index_to_explain = int(tf.argmax(self.bb(image[tf.newaxis,:]),axis=1).numpy())
+    def tensorflow_explain(self, image, index_to_explain, baseline, steps=50, cuda=False):
         # compute the integrated gradients 
         if baseline == 'white':
-            attributions = self.compute_scores(preprocessing(image), index_to_explain, 
-                                               baseline=preprocessing(tf.zeros(shape=image.shape)+255), m_steps=steps, batch_size=32).numpy()
+            attributions = self.compute_scores(self.preprocessing(image), index_to_explain, 
+                                               baseline=self.preprocessing(np.zeros(shape=image.shape)+255), m_steps=steps, batch_size=32).numpy()
         elif baseline == 'black':
-            attributions = self.compute_scores(preprocessing(image), index_to_explain, 
-                                               baseline=preprocessing(tf.zeros(shape=image.shape)+0), m_steps=steps, batch_size=32).numpy()
+            attributions = self.compute_scores(self.preprocessing(image), index_to_explain, 
+                                               baseline=self.preprocessing(np.zeros(shape=image.shape)+0), m_steps=steps, batch_size=32).numpy()
         elif baseline == 'half':
             attributions = []
-            attributions.append(self.compute_scores(preprocessing(image), index_to_explain, 
-                                                    baseline=preprocessing(tf.zeros(shape=image.shape)+255), m_steps=steps, batch_size=32).numpy())
-            attributions.append(self.compute_scores(preprocessing(image), index_to_explain, 
-                                                    baseline=preprocessing(tf.zeros(shape=image.shape)+0), m_steps=steps, batch_size=32).numpy())
+            attributions.append(self.compute_scores(self.preprocessing(image), index_to_explain, 
+                                                    baseline=self.preprocessing(np.zeros(shape=image.shape)+255), m_steps=steps, batch_size=32).numpy())
+            attributions.append(self.compute_scores(self.preprocessing(image), index_to_explain, 
+                                                    baseline=self.preprocessing(np.zeros(shape=image.shape)+0), m_steps=steps, batch_size=32).numpy())
             attributions = np.average(np.array(attributions), axis=0)
         elif baseline == 'random':
             attributions = []
             for i in range(10):
-                attributions.append(self.compute_scores(preprocessing(image), index_to_explain, 
-                                                    baseline=preprocessing(tf.random.uniform(shape=image.shape)+255), m_steps=steps, batch_size=32).numpy())
+                attributions.append(self.compute_scores(self.preprocessing(image), index_to_explain, 
+                                                    baseline=self.preprocessing(np.random.random_sample(image.shape)+255), m_steps=steps, batch_size=32).numpy())
             attributions = np.average(np.array(attributions), axis=0)
         else:
             raise Exception('baseline method not supported')
@@ -129,76 +126,73 @@ class IntgradImageExplainer(ImageExplainer):
     
 ######################## PYTORCH ##########################
 
-    @staticmethod
-    def compute_outputs_and_gradients(inputs, model, target_label_idx, cuda=False):
+    def compute_outputs_and_gradients(self, inputs, target_label_idx, cuda=False):
+        # do the pre-processing
         predict_idx = None
         gradients = []
-        for img in inputs:
-            img.requires_grad = True
-            output = model(img)
-            if target_label_idx is None:
-                target_label_idx = torch.argmax(output, 1).item()
-            index = np.ones((output.size()[0], 1)) * target_label_idx
-            index = torch.tensor(index, dtype=torch.int64)
-            if cuda:
-                index = index.cuda()
-            output = output.gather(1, index)
-            # clear grad
-            model.zero_grad()
-            output.backward()
-            gradient = img.grad.detach().cpu().numpy()[0]
-            gradients.append(gradient)
+        for input in inputs:
+            with torch.autograd.set_grad_enabled(True):
+                input = self.preprocessing(input)
+                input.requires_grad=True
+                output = self.predict(input)
+                index = np.ones((output.size()[0], 1)) * target_label_idx
+                index = torch.tensor(index, dtype=torch.int64)
+                if cuda:
+                    index = index.cuda()
+                output = output.gather(1, index)
+                # clear grad
+                self.bb.zero_grad()
+                gradient = torch.autograd.grad(torch.unbind(output), input)[0].detach().numpy()
+                gradients.append(gradient)
         gradients = np.array(gradients)
         return gradients, target_label_idx
-        
-    @staticmethod
-    def integrated_gradients(image, model, target_label_idx, predict_and_gradients, baseline, steps=50, cuda=False):
-        if baseline is None:
-            baseline = 0 * image 
+
+    def integrated_gradients(self, image, target_label_idx, baseline, steps=50, cuda=False):
         # scale inputs and compute gradients
+        image = np.array(image)
         scaled_inputs = [baseline + (float(i) / steps) * (image - baseline) for i in range(0, steps + 1)]
-        grads, _ = predict_and_gradients(scaled_inputs, model, target_label_idx, cuda)
-        avg_grads = np.average(grads[:-1], axis=0)
+        grads, _ = self.compute_outputs_and_gradients(scaled_inputs, target_label_idx, cuda)
+        avg_grads = np.average(grads[:-1], axis=0).squeeze(0)
         avg_grads = np.transpose(avg_grads, (1, 2, 0))
-        delta_X = (image - baseline).detach().squeeze(0).cpu().numpy()
+        delta_X = (self.preprocessing(image) - self.preprocessing(baseline)).detach().squeeze(0).cpu().numpy()
         delta_X = np.transpose(delta_X, (1, 2, 0))
         integrated_grad = delta_X * avg_grads
         return integrated_grad
 
-    def random_baseline(self, image, model, target_label_idx, predict_and_gradients, steps, num_random_trials, cuda):
+    def random_baseline(self, image, target_label_idx, steps, num_random_trials, cuda):
         all_intgrads = []
         for i in range(num_random_trials):
-            integrated_grad = self.integrated_gradients(self.preprocessing(image), model, target_label_idx, predict_and_gradients,
-                                                        baseline=self.preprocessing(255.0*torch.rand(image.shape)), steps=steps, cuda=cuda)
+            integrated_grad = self.integrated_gradients(image, target_label_idx,
+                                                        baseline=255.0*np.random.random_sample(image.shape), steps=steps, cuda=cuda)
             all_intgrads.append(integrated_grad)
         avg_intgrads = np.average(np.array(all_intgrads), axis=0)
         return avg_intgrads
 
-    def white_and_black_baseline(self, image, model, target_label_idx, predict_and_gradients, steps, cuda):
+    def white_and_black_baseline(self, image, target_label_idx, steps, cuda):
         all_intgrads = []
-        integrated_grad = self.integrated_gradients(self.preprocessing(image), model, target_label_idx, predict_and_gradients,
-                                                    baseline=self.preprocessing(255.0*torch.ones(image.shape)), steps=steps, cuda=cuda)
+        integrated_grad = self.integrated_gradients(image, target_label_idx,
+                                                    baseline=255.0+np.zeros(image.shape), steps=steps, cuda=cuda)
         all_intgrads.append(integrated_grad)
-        integrated_grad = self.integrated_gradients(self.preprocessing(image), model, target_label_idx, predict_and_gradients, 
-                                                    baseline=self.preprocessing(0.0*torch.ones(image.shape)), steps=steps, cuda=cuda)
+        integrated_grad = self.integrated_gradients(image, target_label_idx, 
+                                                    baseline=0.0+np.zeros(image.shape), steps=steps, cuda=cuda)
         all_intgrads.append(integrated_grad)
         avg_intgrads = np.average(np.array(all_intgrads), axis=0)
         return avg_intgrads
     
-    def pytorch_explain(self, image, index_to_explain, baseline, preprocessing, steps=50, cuda=False):
-        image = image.unsqueeze(0)
+    def pytorch_explain(self, image, index_to_explain, baseline, steps=50, cuda=False):
+        
         # compute the integrated gradients 
         if baseline == 'white':
-            attributions = self.integrated_gradients(preprocessing(image), self.bb, index_to_explain, self.compute_outputs_and_gradients, 
-                                                     baseline=preprocessing(255.0*torch.ones(image.shape)), steps=steps, cuda=cuda)
+            attributions = self.integrated_gradients(image, index_to_explain, 
+                                                     baseline=255.0*np.ones(image.shape), steps=steps, cuda=cuda)
         elif baseline == 'black':
-            attributions = self.integrated_gradients(preprocessing(image), self.bb, index_to_explain, self.compute_outputs_and_gradients, 
-                                                     baseline=preprocessing(0.0*torch.ones(image.shape)), steps=steps, cuda=cuda)
+            attributions = self.integrated_gradients(image, index_to_explain,
+                                                     baseline=0.0*np.ones(image.shape), steps=steps, cuda=cuda)
         elif baseline == 'half':
-            attributions = self.white_and_black_baseline(preprocessing(image), self.bb, index_to_explain, self.compute_outputs_and_gradients, 
+            attributions = self.white_and_black_baseline(image, index_to_explain,
                                                          steps=steps, cuda=cuda)
         elif baseline == 'random':
-            attributions = self.random_baseline(preprocessing(image), self.bb, index_to_explain, self.compute_outputs_and_gradients, 
+            attributions = self.random_baseline(image, index_to_explain, 
                                                 steps=steps, num_random_trials=10, cuda=cuda)
         else:
             raise Exception('baseline method not supported')
