@@ -22,8 +22,8 @@ class IntgradImageExplainer(ImageExplainer):
             - black will use a black one
             - half will average a white and a black one
             - random will use random color pixels
-        preprocessing: function that takes as input a list of rgb images (shape HxWxC, format int, range (0,255)) and return the correct format for the black box
-        predict: function that takes as input the output of preprocessing function and return the prediction of the black with shape (-1,1)
+        preprocessing: function that takes as input an image and return the correct format for the black box
+        predict: function that takes as input the output of preprocessing function and return an array of probabilities of the classes with shape (-1,num_classes)
         steps: number of images to use to produce the saliency map
         model_type: library used for your blackbox: tensorflow or pytorch 
         cuda: set to True if your model runs on GPU
