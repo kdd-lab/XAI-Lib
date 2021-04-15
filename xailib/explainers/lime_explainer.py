@@ -27,7 +27,7 @@ class LimeXAITabularExplainer(TabularExplainer):
         kernel_width = config['kernel_width'] if 'kernel_width' in config else None
         kernel = config['kernel'] if 'kernel' in config else None
         self.lime_explainer = LimeTabularExplainer(df[feature_names].values, feature_names=feature_names,
-                                              class_names=class_values, feature_selection= feature_selection,
+                                                   class_names=class_values, feature_selection=feature_selection,
                                                    discretize_continuous=discretize_continuous, discretizer=discretizer,
                                                    sample_around_instance=sample_around_instance, kernel_width=kernel_width,
                                                    kernel=kernel)
