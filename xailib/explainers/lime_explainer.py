@@ -41,7 +41,7 @@ class LimeXAITabularExplainer(TabularExplainer):
             self.classifier_fn = self.bb.predict_proba
         exp = self.lime_explainer.explain_instance(x, 
                                                    self.classifier_fn, 
-                                                   um_samples=num_samples, 
+                                                   num_samples=num_samples, 
                                                    top_labels=top_labels)
         return exp
 
