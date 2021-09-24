@@ -65,125 +65,20 @@ class ShapXAITabularExplainer(TabularExplainer):
         plt.show()
 
     def plot_shap_values_alt(self, feature_names, exp, fontDimension=10):
-    
-        fontSize = fontDimension
-    
         #data prepraration
         arr=np.c_[np.array(feature_names),exp]
         dataToPlot=pd.DataFrame(arr,columns=['name','value'])
 
-        
-        #chart selector
-        dotData=np.arange(-1, 1, 0.0125).tolist()
-        dotDF=pd.DataFrame({'xValue': dotData})
-                           
-        brush = alt.selection_interval(
-            encodings=['x'],
-            init = {"xValue":[-0.005,0.005]},
-            fields= ['xValue'],
-            mark=alt.BrushConfig(fill='green'),
-            name='sel')
-
-        dotSelection = alt.Chart(
-            dotDF
-        ).mark_rule(
-        strokeWidth=3
-        ).encode(
-            x=alt.X(
-                field='xValue',
-                type='quantitative',
-                title='Select a cutoff range for Feature Importance values ',
-                axis=alt.Axis(orient='top',titleFontSize=fontSize)
-            ),
-            color=alt.condition(
-                'datum.xValue < sel.xValue[0] | datum.xValue > sel.xValue[1]',
-                alt.Color(
-              'xValue:Q',
-               scale=alt.Scale(
-                    scheme='blueorange',
-                    domain=[-1,1],
-                    domainMid=0,
-                    ),
-                    legend=None
-            ),
-                alt.value('lightgray'))
-        ).add_selection(
-        brush
-        )
-
-
-        #charting bars
-        bars= alt.Chart(
-            dataToPlot
-        ).transform_filter(
-            'datum.value > -1 & datum.value < 1'
-        ).transform_calculate(
-            minSelection="toNumber(sel.xValue[0])",
-            maxSelection="toNumber(sel.xValue[1])"
-        ).transform_filter(
-             'datum.value < sel.xValue[0] | datum.value > sel.xValue[1]'
-        ).mark_bar().encode(
-            x=alt.X('value:Q',title=None),
-            y=alt.Y('name:N',title=None, sort=alt.EncodingSortField(field='value', op='mean',order='descending')),
-            color=alt.Color(
-              'value:Q',
-               scale=alt.Scale(
-                    scheme='blueorange',
-                    domain=[-1,1],
-                    domainMid=0,
-                    ),
-               legend=alt.Legend(title=['Feature','Importance'], titleFontSize=fontSize, labelFontSize=fontSize)
-
-            ),
-            tooltip=[
-                 alt.Tooltip(field='name',type='nominal', title='Feature'),
-                 alt.Tooltip(field='value',type='quantitative', title='Importance')
-                             ]
-        )
-
-        line = alt.Chart(pd.DataFrame({'x': [0]})).mark_rule().encode(x='x')
-
-        text = alt.Chart(dataToPlot).transform_calculate(
-            minSelection="toNumber(sel.xValue[0])",
-            maxSelection="sel.x[1]"
-        ).mark_text(
-            align='left',
-            baseline='top',
-        ).encode(
-            x=alt.value(5),
-            y=alt.value(5),
-            text=alt.Text("minSelection:N"),
-        )
-
+        fontSize = fontDimension
         step = fontSize*1.5
-        #layering feature importnace chart
-        featuresChart=(bars+line)
-
-        #composing the chart
-        finalChart=(dotSelection & featuresChart).properties(
-            padding=10,
-            ).configure_axis(
-            labelLimit=step*15,
-            labelFontSize=fontSize
-        )
-
-        return finalChart
-
-    def plot_shap_values_alt2(self, feature_names, exp, fontDimension=10):
-        #data prepraration
-        arr=np.c_[np.array(feature_names),exp]
-        dataToPlot=pd.DataFrame(arr,columns=['name','value'])
-
-        fontSize = fontDimension
-
+        
         #selector
         slider = alt.binding_range(min=0, max=1, step=0.005, name='Importance cutoff value (±) ')
         selector = alt.selection_single(name="Cutter", fields=['cutoff'], bind=slider, init={'cutoff': 0.05})
 
         #charting
         bar= alt.Chart(
-            dataToPlot,
-            title='Shap Feature importance'
+            dataToPlot
         ).transform_filter(
             'datum.value > -1 & datum.value < 1'
         ).transform_filter(
@@ -198,7 +93,7 @@ class ShapXAITabularExplainer(TabularExplainer):
                     domain=[-1,1],
                     domainMid=0,
                     ),
-              legend=alt.Legend(title=['Feature','Importance'], titleFontSize=fontSize, labelFontSize=fontSize)
+              legend=None
                 ),
             tooltip=[
                  alt.Tooltip(field='name',type='nominal', title='Feature'),
@@ -209,19 +104,63 @@ class ShapXAITabularExplainer(TabularExplainer):
         )
         line = alt.Chart(pd.DataFrame({'x': [0]})).mark_rule().encode(x='x')
 
+        #Legend Chart
+        legendData=np.arange(-1, 1, 0.0125).tolist()
+        legendDF=pd.DataFrame({'xValue': legendData})
 
-        step = fontSize*1.5
-
-        chart=(bar+line).properties(
-            width=450,
-            height=alt.Step(step=step),
+        legendChart = alt.Chart(
+            legendDF
+        ).mark_rule(
+        strokeWidth=3
+        ).encode(
+            x=alt.X(
+                field='xValue',
+                type='quantitative',
+                title='Select a cutoff range for Feature Importance values ',
+                axis=alt.Axis(orient='top',titleFontSize=fontSize)
+            ),
+            color=  alt.Color(
+              'xValue:Q',
+               scale=alt.Scale(
+                    scheme='redyellowblue',
+                    domain=[-1,1],
+                    domainMid=0,
+                    ),
+                legend=None
+            )
+        )
+        
+        cuttedChart= alt.Chart(
+            pd.DataFrame({'y': [0],'x': [-0.5],'x2': [0.5]})
+        ).transform_calculate(
+            x_min=-(selector.cutoff), 
+            x_max=selector.cutoff
+        ).mark_rect(
+            color='black',
+            height=20,
+            tooltip=True,
+            opacity=0.4
+        ).encode(
+            x='x_min:Q',
+            x2='x_max:Q',
+            y='y:Q'
+            
+        ).add_selection(
+        selector
+        )
+        
+        legend=(legendChart+cuttedChart).properties(
+            height=20
+        )
+        
+        chart=(legend & (bar+line)).properties(
             padding=10,
             ).configure_axis(
             labelLimit=step*15,
             labelFontSize=fontSize
         )
 
-        # from IPython.display import HTML
+        # HTML injection using IPython.display  
         display(HTML("""
         <style>
         .vega-bind {
@@ -237,5 +176,6 @@ class ShapXAITabularExplainer(TabularExplainer):
         }
 
         </style>
-        """ % (fontSize)))
+        """ % (fontSize)
+        ))
         display(chart)
