@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib.pyplot import figure
 from xailib.models.bbox import AbstractBBox
-from xailib.xailib_tabular import TabularExplainer
+from xailib.xailib_tabular import TabularExplainer, TabularExplanation
 import shap
 import matplotlib.pyplot as plt
 shap.initjs
@@ -14,67 +14,50 @@ import numpy as np
 from IPython.display import HTML      
 
 
-class NoExplainerFound(Exception):
-
-    def __init__(self, name):
-        self.message = 'Explanator not found '+name
-        super().__init__(self.message)
-
-
-class ShapXAITabularExplainer(TabularExplainer):
-    shap_explainer = None
-
-    def __init__(self, bb: AbstractBBox):
+class ShapXAITabularExplanation(TabularExplanation):
+    def __init__(self, shap_exp, feature_names: list):
         super().__init__()
-        self.bb = bb
+        self.exp = shap_exp
+        self.feature_names = feature_names
 
-    def fit(self, config):
-        if config['explainer'] == 'linear':
-            self.shap_explainer = shap.LinearExplainer(self.bb.model(), config['X_train'])
-        elif config['explainer'] == 'tree':
-            self.shap_explainer = shap.TreeExplainer(self.bb.model())
-        elif config['explainer'] == 'deep':
-            self.shap_explainer = shap.DeepExplainer(self.bb, config['X_train'])
-        elif config['explainer'] == 'kernel':
-            self.shap_explainer = shap.KernelExplainer(self.bb.predict_proba, config['X_train'])
-        else:
-            raise NoExplainerFound(config['explainer'])
+    def getFeaturesImportance(self):
+        return self.exp
 
+    def getExemplars(self):
+        return None
 
+    def getCounterExemplars(self):
+        return None
 
-    def explain(self, x):
-        exp = self.shap_explainer.shap_values(x)
-        return exp
+    def getRules(self):
+        return None
 
-    def expected_value(self, val):
-        if val == -1:
-            return self.shap_explainer.expected_value
-        else:
-            return self.shap_explainer.expected_value[val]
+    def getCounterfactualRules(self):
+        return None
 
-    def plot_shap_values(self, feature_names, exp, range_start, range_end):
-        plt.rcParams.update({'font.size': 20})
-        plt.figure(figsize=(10, 8))
-        plt.bar(feature_names[range_start:range_end], exp[range_start:range_end], facecolor='lightblue', width=0.5)
-        # You can specify a rotation for the tick labels in degrees or with keywords.
-        plt.xticks(feature_names[range_start:range_end], rotation='vertical')
-        # Pad margins so that markers don't get clipped by the axes
-        plt.margins(0.1)
-        # Tweak spacing to prevent clipping of tick-labels
-        plt.subplots_adjust(bottom=0.25)
-        plt.show()
-
-    def plot_shap_values_alt(self, feature_names, exp, fontDimension=10):
+    def plot_features_importance(self, fontDimension=10):
         #data prepraration
-        arr=np.c_[np.array(feature_names),exp]
+        feature_values = []
+        if np.ndim(self.exp) == 1 :
+            feature_values = self.exp
+        else:
+            feature_values = self.exp[0]
+
+
+        arr=np.c_[np.array(self.feature_names), feature_values]
         dataToPlot=pd.DataFrame(arr,columns=['name','value'])
+        dataToPlot['value'] = dataToPlot['value'].astype('float64')
 
         fontSize = fontDimension
         step = fontSize*1.5
+
+        maxValue = dataToPlot['value'].max()
+        minValue = dataToPlot['value'].min()
+        maxRange = max(abs(maxValue),abs(minValue))
         
         #selector
-        slider = alt.binding_range(min=0, max=1, step=0.005, name='Importance cutoff value (±) ')
-        selector = alt.selection_single(name="Cutter", fields=['cutoff'], bind=slider, init={'cutoff': 0.05})
+        slider = alt.binding_range(min=0, max=maxRange, step=maxRange/50, name='Importance cutoff value (±) ')
+        selector = alt.selection_single(name="Cutter", fields=['cutoff'], bind=slider, init={'cutoff': 0.0})
 
         #charting
         bar= alt.Chart(
@@ -90,7 +73,7 @@ class ShapXAITabularExplainer(TabularExplainer):
               'value:Q',
                scale=alt.Scale(
                     scheme='blueorange',
-                    domain=[-1,1],
+                    domain=[-maxRange,maxRange],
                     domainMid=0,
                     ),
               legend=None
@@ -105,7 +88,7 @@ class ShapXAITabularExplainer(TabularExplainer):
         line = alt.Chart(pd.DataFrame({'x': [0]})).mark_rule().encode(x='x')
 
         #Legend Chart
-        legendData=np.arange(-1, 1, 0.0125).tolist()
+        legendData=np.arange(-maxRange, maxRange, maxRange/100).tolist()
         legendDF=pd.DataFrame({'xValue': legendData})
 
         legendChart = alt.Chart(
@@ -123,7 +106,7 @@ class ShapXAITabularExplainer(TabularExplainer):
               'xValue:Q',
                scale=alt.Scale(
                     scheme='redyellowblue',
-                    domain=[-1,1],
+                    domain=[-maxRange, maxRange],
                     domainMid=0,
                     ),
                 legend=None
@@ -143,7 +126,7 @@ class ShapXAITabularExplainer(TabularExplainer):
         ).encode(
             x='x_min:Q',
             x2='x_max:Q',
-            y='y:Q'
+            y=alt.Y(field="y", type="quantitative", axis=None)
             
         ).add_selection(
         selector
@@ -179,3 +162,57 @@ class ShapXAITabularExplainer(TabularExplainer):
         """ % (fontSize)
         ))
         display(chart)
+
+
+class NoExplainerFound(Exception):
+
+    def __init__(self, name):
+        self.message = 'Explanator not found '+name
+        super().__init__(self.message)
+
+
+class ShapXAITabularExplainer(TabularExplainer):
+    shap_explainer = None
+
+    def __init__(self, bb: AbstractBBox, feature_names: list):
+        super().__init__()
+        self.bb = bb
+        self.feature_names = feature_names
+
+    def fit(self, config):
+        if config['explainer'] == 'linear':
+            self.shap_explainer = shap.LinearExplainer(self.bb.model(), config['X_train'])
+        elif config['explainer'] == 'tree':
+            self.shap_explainer = shap.TreeExplainer(self.bb.model())
+        elif config['explainer'] == 'deep':
+            self.shap_explainer = shap.DeepExplainer(self.bb, config['X_train'])
+        elif config['explainer'] == 'kernel':
+            self.shap_explainer = shap.KernelExplainer(self.bb.predict_proba, config['X_train'])
+        else:
+            raise NoExplainerFound(config['explainer'])
+
+
+
+    def explain(self, x):
+        exp = self.shap_explainer.shap_values(x)
+        return ShapXAITabularExplanation(exp, self.feature_names)
+
+    def expected_value(self, val):
+        if val == -1:
+            return self.shap_explainer.expected_value
+        else:
+            return self.shap_explainer.expected_value[val]
+
+    def plot_shap_values(self, feature_names, exp, range_start, range_end):
+        plt.rcParams.update({'font.size': 20})
+        plt.figure(figsize=(10, 8))
+        plt.bar(feature_names[range_start:range_end], exp[range_start:range_end], facecolor='lightblue', width=0.5)
+        # You can specify a rotation for the tick labels in degrees or with keywords.
+        plt.xticks(feature_names[range_start:range_end], rotation='vertical')
+        # Pad margins so that markers don't get clipped by the axes
+        plt.margins(0.1)
+        # Tweak spacing to prevent clipping of tick-labels
+        plt.subplots_adjust(bottom=0.25)
+        plt.show()
+
+    

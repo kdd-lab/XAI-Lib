@@ -3,20 +3,6 @@ from abc import abstractmethod
 from xailib.xailib_base import Explainer, Explanation
 
 
-class TabularExplainer(Explainer):
-
-    def __init__(self):
-        super().__init__()
-
-    @abstractmethod
-    def fit(self, X, y, config):
-        pass
-
-    @abstractmethod
-    def explain(self, b, x):
-        pass
-
-
 class TabularExplanation(Explanation):
 
     def __init__(self):
@@ -41,3 +27,21 @@ class TabularExplanation(Explanation):
     @abstractmethod
     def getCounterfactualRules(self):
         pass
+
+
+
+class TabularExplainer(Explainer):
+
+    def __init__(self):
+        super().__init__()
+
+    @abstractmethod
+    def fit(self, X, y, config):
+        pass
+
+    @abstractmethod
+    def explain(self, b, x) -> TabularExplanation:
+        pass
+
+
+
