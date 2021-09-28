@@ -63,8 +63,6 @@ class ShapXAITabularExplanation(TabularExplanation):
         bar= alt.Chart(
             dataToPlot
         ).transform_filter(
-            'datum.value > -1 & datum.value < 1'
-        ).transform_filter(
              (alt.datum.value > selector.cutoff ) | (alt.datum.value < -(selector.cutoff))
         ).mark_bar().encode(
             x=alt.X('value:Q',title=None),
