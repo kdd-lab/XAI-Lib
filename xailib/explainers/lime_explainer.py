@@ -6,9 +6,11 @@ import numpy as np
 from xailib.models.bbox import AbstractBBox
 from xailib.xailib_tabular import TabularExplainer
 from xailib.xailib_image import ImageExplainer
+from xailib.xailib_text import TextExplainer
 from externals.lore.datamanager import prepare_dataset
 from lime.lime_tabular import LimeTabularExplainer
 from lime.lime_image import LimeImageExplainer
+from lime.lime_text import LimeTextExplainer
 
 class LimeXAITabularExplainer(TabularExplainer):
     lime_explainer = None
@@ -127,6 +129,51 @@ class LimeXAIImageExplainer(ImageExplainer):
         ax[2].imshow(heatmap,alpha=0.5,cmap='coolwarm')
         ax[2].axis('off')
         ax[2].set_title('Overlap of Query Image and Heatmap');
+        
+        
+class LimeXAITextExplainer(TextExplainer):
+    lime_explainer = None
+
+    def __init__(self, bb: AbstractBBox):
+        """
+        Arguments:
+            bb: black box model
+        """
+        super().__init__()
+        self.bb = bb
+
+    def fit(self, class_names=None, verbose=False):
+        """
+        Create the explainer,
+        Arguments:
+            class_names: [None] list of class names, ordered according to whatever the
+                classifier is using. If not present, class names will be '0',
+                '1', ...
+            verbose: [False] if true, print local prediction values from linear model
+        """
+        self.lime_explainer = LimeTextExplainer(class_names = class_names, verbose = False)
+
+    def explain(self, sentence, classifier_fn=None, num_samples=1000, plot=False):
+        """
+        Return LIME explanation
+        Arguments: 
+            sentence: query text to explain
+            classifier_fn: [None] function that takes as input an array of images (the LIME neighbourhood) and return an array of (num_images,num_classes)
+                           If None will use black_box.predict function
+            num_samples: [1000] number of points in the generated neighbourhood
+        """
+        if classifier_fn:
+            self.classifier_fn = classifier_fn
+        else:
+            self.classifier_fn = self.bb.predict
+            
+        exp = self.lime_explainer.explain_instance(sentence,
+                                                   self.classifier_fn,
+                                                   num_samples=num_samples)
+        
+        if plot:
+            exp.as_pyplot_figure()
+        return exp
         
         
         
