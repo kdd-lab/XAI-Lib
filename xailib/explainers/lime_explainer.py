@@ -78,7 +78,7 @@ class LimeXAIImageExplainer(ImageExplainer):
         """
         self.lime_explainer = LimeImageExplainer(verbose = False)
 
-    def explain(self, image, classifier_fn=None, top_labels=5, num_samples=1000):
+    def explain(self, image, classifier_fn=None, segmentation_fn=None, top_labels=5, num_samples=1000):
         """
         Return LIME explanation
         Arguments: 
@@ -95,6 +95,7 @@ class LimeXAIImageExplainer(ImageExplainer):
             
         exp = self.lime_explainer.explain_instance(image,
                                                    self.classifier_fn,
+                                                   segmentation_fn=segmentation_fn,
                                                    top_labels=top_labels,
                                                    hide_color=0,
                                                    num_samples=num_samples)
