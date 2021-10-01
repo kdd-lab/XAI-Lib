@@ -69,7 +69,7 @@ class LOREM(object):
 
         if isinstance(samples, int):
             if self.verbose:
-                print('generating neighborhood - %s' % self.neigh_type)
+                print('generating neighborhood')# - %s' % self.neigh_type)
             Z = self.neighgen_fn(x, samples)
         else:
             Z = samples

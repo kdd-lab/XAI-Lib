@@ -64,7 +64,7 @@ class ILOREM(object):
         img = img if len(img.shape) == 3 else gray2rgb(img)
 
         if self.verbose:
-            print('generating neighborhood - %s' % self.neigh_type)
+            print('generating neighborhood')
 
         Z, Yb, class_value, segments = self.neighgen_fn(img, num_samples, hide_color)
 
