@@ -74,7 +74,7 @@ class LoreTabularExplanation(TabularExplanation):
 
         rulesSpans=""
         for el in self.expDict['rule']['premise']:
-            rulesSpans+="<span class='rule'>"+el['att'].replace("_"," ")+ " <strong>" + el['op']+ "</strong> "+ str(el['thr'])+"</span>"
+            rulesSpans+="<span class='rule'>"+el['att'].replace("_"," ")+ " <strong>" + el['op']+ "</strong> "+ str("%.2f" %el['thr'])+"</span>"
 
         htmlRules=HTML("<p class='rules'>%s</p>"%(rulesSpans))
 
@@ -127,7 +127,7 @@ class LoreTabularExplanation(TabularExplanation):
             cRulesTitle= el['cons']
             cRulesSpans=""
             for p in el['premise']:
-                cRulesSpans+="<span class='crule'>"+p['att'].replace("_"," ")+ " " + p['op']+ " "+ str(p['thr'])+"</span>"
+                cRulesSpans+="<span class='crule'>"+p['att'].replace("_"," ")+ " " + p['op']+ " "+ str("%.2f" %p['thr'])+"</span>"
 
                 
             display(HTML('''
