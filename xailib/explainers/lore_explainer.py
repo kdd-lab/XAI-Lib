@@ -1,8 +1,144 @@
-from xailib.xailib_tabular import TabularExplainer
+from xailib.xailib_tabular import TabularExplainer, TabularExplanation
 from xailib.models.bbox import AbstractBBox
 import pandas as pd
 from externals.lore.datamanager import prepare_dataset
 from externals.lore.lore.lorem import LOREM
+from externals.lore.lore.explanation import ExplanationEncoder
+import json
+from IPython.display import HTML
+
+
+class LoreTabularExplanation(TabularExplanation):
+    def __init__(self, lore_exp):
+        super().__init__()
+        self.exp = lore_exp
+        self.expDict = json.loads(json.dumps(self.exp, cls=ExplanationEncoder))
+        
+    def getFeaturesImportance(self):
+        return None
+
+    def getExemplars(self):
+        return None
+
+    def getCounterExemplars(self):
+        return None
+
+    def getRules(self):
+        return self.expDict['rule']
+
+    def getCounterfactualRules(self):
+        return self.expDict['crules']
+
+    def plotRules(self):
+        htmlStyle=HTML("""
+                <style>
+                .red {
+                background-color:firebrick;
+                padding:3px 5px 3px 5px;
+                border-radius:5px;
+
+                color:white;
+                }
+                .rules{
+                    margin-top:10px;
+                    font-weight: 400;
+                }
+                .rule{
+                padding:5px 20px 5px 20px;
+                border-radius:5px;
+                margin-right:5px;
+                font-size:12px;
+                line-height:20px;
+                display: block;
+                margin-bottom: 10px;
+                width: fit-content;
+                
+                color:white;
+                background-color:firebrick;
+                opacity:0.8;
+                }
+                </style>
+                """
+                )
+
+        htmlPrediction=HTML(
+            '''
+            <h3>Why the predicted value for class <span class='red'>%s</span> is <span class='red'>%s</span> ?</h3>
+            '''%(self.expDict['rule']['class_name'],self.expDict['rule']['cons'])
+        )
+
+        htmlExplanation=HTML('''
+            <p>Because all the following conditions happen:</p>
+            ''')
+
+
+        rulesSpans=""
+        for el in self.expDict['rule']['premise']:
+            rulesSpans+="<span class='rule'>"+el['att'].replace("_"," ")+ " <strong>" + el['op']+ "</strong> "+ str("%.2f" %el['thr'])+"</span>"
+
+        htmlRules=HTML("<p class='rules'>%s</p>"%(rulesSpans))
+
+        display(htmlStyle)
+        display(htmlPrediction)
+        display(htmlExplanation)
+        display(htmlRules)
+
+    def plotCounterfactualRules(self):
+        htmlStyle=HTML("""
+                <style>
+                .red {
+                background-color:firebrick;
+                padding:3px 5px 3px 5px;
+                border-radius:5px;
+                color:white;
+                }
+                .crules{
+                    margin-top:10px;
+                    font-weight: 400;
+                }
+                .crule{            
+                padding:5px 20px 5px 20px;
+                border-radius:5px;
+                margin-right:5px;
+                font-size:12px;
+                line-height:20px;
+                display: block;
+                margin-bottom: 10px;
+                width: fit-content;
+                
+                color:#202020;
+                background-color:gold;
+                }
+                </style>
+                """
+                )
+        display(htmlStyle)
+
+        htmlTitleCRules=HTML('''
+            <h3>The predicted value for class <span class='red'>%s</span> is <span class='red'>%s</span>.</h3>
+            <h3>It would have been:</h3>
+            '''%(self.expDict['rule']['class_name'], self.expDict['bb_pred'])
+                        )
+
+        display(htmlTitleCRules)
+        
+        cRulesDiv=''
+        for idx,el in enumerate(self.expDict['crules']):
+            cRulesTitle= el['cons']
+            cRulesSpans=""
+            for p in el['premise']:
+                cRulesSpans+="<span class='crule'>"+p['att'].replace("_"," ")+ " " + p['op']+ " "+ str("%.2f" %p['thr'])+"</span>"
+
+                
+            display(HTML('''
+                <div class='crules'>
+                    <div>
+                        <h4><span class='red'>%s</span> if the following condition holds</h4>
+                    </br>%s
+                    </div>
+                </div>
+            '''%(cRulesTitle,cRulesSpans))   
+            )
 
 class LoreTabularExplainer(TabularExplainer):
     lore_explainer = None
@@ -29,4 +165,4 @@ class LoreTabularExplainer(TabularExplainer):
 
     def explain(self, x):
         exp = self.lore_explainer.explain_instance(x, samples=1000, use_weights=True)
-        return exp
+        return LoreTabularExplanation(exp)

@@ -4,13 +4,42 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from xailib.models.bbox import AbstractBBox
-from xailib.xailib_tabular import TabularExplainer
+from xailib.xailib_tabular import TabularExplainer, TabularExplanation
 from xailib.xailib_image import ImageExplainer
 from xailib.xailib_text import TextExplainer
 from externals.lore.datamanager import prepare_dataset
 from lime.lime_tabular import LimeTabularExplainer
 from lime.lime_image import LimeImageExplainer
 from lime.lime_text import LimeTextExplainer
+
+
+class LimeXAITabularExplanation(TabularExplanation):
+    def __init__(self, lime_exp):
+        super().__init__()
+        self.exp = lime_exp
+
+    def getFeaturesImportance(self):
+        return self.exp.as_list()
+
+    def getExemplars(self):
+        return None
+
+    def getCounterExemplars(self):
+        return None
+
+    def getRules(self):
+        return None
+
+    def getCounterfactualRules(self):
+        return None
+
+    def plot_features_importance(self, fontDimension=10):
+        #data prepraration
+        
+        dataToPlot=pd.DataFrame(self.exp.as_list(),columns=['name','value'])
+        dataToPlot['value'] = dataToPlot['value'].astype('float64')
+
+        super().plot_features_importance_from(dataToPlot, fontDimension)
 
 class LimeXAITabularExplainer(TabularExplainer):
     lime_explainer = None
@@ -45,7 +74,7 @@ class LimeXAITabularExplainer(TabularExplainer):
                                                    self.classifier_fn, 
                                                    num_samples=num_samples, 
                                                    top_labels=top_labels)
-        return exp
+        return LimeXAITabularExplanation(exp)
 
     def plot_lime_values(self, exp, range_start, range_end):
         feature_names = [a_tuple[0] for a_tuple in exp]
