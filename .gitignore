@@ -5,3 +5,6 @@ __pycache__
 .virtual_documents
 ignore
 .ipynb_checkpoints
+.vscode
+
+
