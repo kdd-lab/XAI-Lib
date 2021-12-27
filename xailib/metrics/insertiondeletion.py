@@ -40,7 +40,8 @@ class ImageInsDel():
         """
         if rgb:
             CH = 3
-        else: CH = 1
+        else: 
+            CH = 1
         HW = size * size # image area
         pred = torch.tensor(self.predict(img))
         top, c = torch.max(pred, 1)
