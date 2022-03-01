@@ -19,6 +19,10 @@ class Explainer(ABC):
     def predict(self, x):
         pass
 
+    @abstractmethod
+    def predict_proba(self, x):
+        pass
+
 
 class Explanation(ABC):
 
