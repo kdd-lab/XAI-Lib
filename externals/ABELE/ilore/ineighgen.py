@@ -42,14 +42,14 @@ class ImageAdversarialGeneratorLatent(ImageNeighborhoodGenerator):
         return
 
     def generate_latent(self):
-        while True:
-            lz_img = np.random.normal(size=(1, self.autoencoder.latent_dim))
-            if self.autoencoder.discriminator is not None and self.valid_thr > 0.0:
-                discriminator_out = self.autoencoder.discriminator.predict(lz_img)[0][0]
-                if discriminator_out > self.valid_thr:
-                    return lz_img
-            else:
-                return lz_img
+        #while True:
+        lz_img = np.random.normal(size=(1, self.autoencoder.latent_dim))
+        #    if self.autoencoder.discriminator is not None and self.valid_thr > 0.0:
+        #        discriminator_out = self.autoencoder.discriminator.predict(lz_img)[0][0]
+        #        if discriminator_out > self.valid_thr:
+        #            return lz_img
+        #    else:
+        return lz_img
 
     def generate_latent_samples(self, num_samples):
         lZ_img = list()
@@ -311,17 +311,17 @@ class ImageGeneticAdversarialGeneratorLatent(ImageAdversarialGeneratorLatent):
         return pickle.loads(pickle.dumps(x))
 
     def mutate(self, toolbox, x):
-        while True:
-            mutated = toolbox.clone(x)
-            mutation_mask = np.random.choice([False, True], self.autoencoder.latent_dim, p=[1 - self.mutpb, self.mutpb])
-            mutator = np.random.normal(size=self.autoencoder.latent_dim)
-            mutated[mutation_mask] = mutator[mutation_mask]
-            if self.autoencoder.discriminator is not None:
-                discriminator_out = self.autoencoder.discriminator.predict(mutated.reshape(1, -1))[0][0]
-                if discriminator_out > self.valid_thr:
-                    return mutated,
-            else:
-                return mutated,
+        #while True:
+        mutated = toolbox.clone(x)
+        mutation_mask = np.random.choice([False, True], self.autoencoder.latent_dim, p=[1 - self.mutpb, self.mutpb])
+        mutator = np.random.normal(size=self.autoencoder.latent_dim)
+        mutated[mutation_mask] = mutator[mutation_mask]
+        #    if self.autoencoder.discriminator is not None:
+        #        discriminator_out = self.autoencoder.discriminator.predict(mutated.reshape(1, -1))[0][0]
+        #        if discriminator_out > self.valid_thr:
+        #            return mutated,
+        #    else:
+        return mutated,
 
     def fitness_equal(self, x, x1):
         feature_similarity_score = 1.0 - cdist(x.reshape(1, -1), x1.reshape(1, -1), metric=self.metric).ravel()[0]
