@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-from externals.LORE.datamanager import prepare_dataset
+from lore_explainer.datamanager import prepare_dataset
 from xailib.explainers.lime_explainer import LimeXAITabularExplainer
 from xailib.explainers.lore_explainer import LoreTabularExplainer
 from xailib.models.sklearn_classifier_wrapper import sklearn_classifier_wrapper
