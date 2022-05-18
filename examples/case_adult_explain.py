@@ -8,11 +8,11 @@ from xailib.explainers.lime_explainer import LimeXAITabularExplainer
 from xailib.explainers.lore_explainer import LoreTabularExplainer
 from xailib.models.sklearn_classifier_wrapper import sklearn_classifier_wrapper
 import time
-from catboost import CatBoostClassifier
+# from catboost import CatBoostClassifier
 from sklearn.linear_model import LogisticRegression
 
-if __name__ == '__main__':
-    source_file = 'datasets/adult.csv'
+def main():
+    source_file = '../datasets/adult.csv'
     class_field = 'class'
     # Load and transform dataset and select one row to classify and explain
     df = pd.read_csv(source_file, skipinitialspace=True, na_values='?', keep_default_na=True)
@@ -68,3 +68,5 @@ if __name__ == '__main__':
     print('print ', end - start)
 
 
+if __name__ == '__main__':
+    main()
