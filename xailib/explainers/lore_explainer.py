@@ -1,19 +1,28 @@
 from xailib.xailib_tabular import TabularExplainer, TabularExplanation
 from xailib.models.bbox import AbstractBBox
 import pandas as pd
-from externals.lore.datamanager import prepare_dataset
-from externals.lore.lore.lorem import LOREM
-from externals.lore.lore.explanation import ExplanationEncoder
+import numpy as np
+
+from lore_sa.dataset import TabularDataset
+from lore_sa.neighgen.random import RandomGenerator
+from lore_sa.surrogate import DecisionTreeSurrogate
+
 import json
 from IPython.display import HTML
 
 
 class LoreTabularExplanation(TabularExplanation):
-    def __init__(self, lore_exp):
+    def __init__(self, bbox: AbstractBBox):
+        """
+        LOREM Explainer for tabular data.
+
+        Parameters
+        ----------
+        bbox [AbstractBBox]:
+        """
         super().__init__()
         self.exp = lore_exp
-        self.expDict = json.loads(json.dumps(self.exp, cls=ExplanationEncoder))
-        
+
     def getFeaturesImportance(self):
         return None
 
@@ -24,13 +33,13 @@ class LoreTabularExplanation(TabularExplanation):
         return None
 
     def getRules(self):
-        return self.expDict['rule']
+        return self.rule
 
     def getCounterfactualRules(self):
-        return self.expDict['crules']
+        return self.crules
 
     def plotRules(self):
-        htmlStyle=HTML("""
+        htmlStyle = HTML("""
                 <style>
                 .red {
                 background-color:firebrick;
@@ -52,31 +61,31 @@ class LoreTabularExplanation(TabularExplanation):
                 display: block;
                 margin-bottom: 10px;
                 width: fit-content;
-                
+
                 color:white;
                 background-color:firebrick;
                 opacity:0.8;
                 }
                 </style>
                 """
-                )
+                         )
 
-        htmlPrediction=HTML(
+        htmlPrediction = HTML(
             '''
             <h3>Why the predicted value for class <span class='red'>%s</span> is <span class='red'>%s</span> ?</h3>
-            '''%(self.expDict['rule']['class_name'],self.expDict['rule']['cons'])
+            ''' % (self.rule['class_name'], self.rule['cons'])
         )
 
-        htmlExplanation=HTML('''
+        htmlExplanation = HTML('''
             <p>Because all the following conditions happen:</p>
             ''')
 
+        rulesSpans = ""
+        for el in self.rule['premise']:
+            rulesSpans += "<span class='rule'>" + el['att'].replace("_", " ") + " <strong>" + el[
+                'op'] + "</strong> " + str("%.2f" % el['thr']) + "</span>"
 
-        rulesSpans=""
-        for el in self.expDict['rule']['premise']:
-            rulesSpans+="<span class='rule'>"+el['att'].replace("_"," ")+ " <strong>" + el['op']+ "</strong> "+ str("%.2f" %el['thr'])+"</span>"
-
-        htmlRules=HTML("<p class='rules'>%s</p>"%(rulesSpans))
+        htmlRules = HTML("<p class='rules'>%s</p>" % (rulesSpans))
 
         display(htmlStyle)
         display(htmlPrediction)
@@ -84,7 +93,7 @@ class LoreTabularExplanation(TabularExplanation):
         display(htmlRules)
 
     def plotCounterfactualRules(self):
-        htmlStyle=HTML("""
+        htmlStyle = HTML("""
                 <style>
                 .red {
                 background-color:firebrick;
@@ -105,31 +114,31 @@ class LoreTabularExplanation(TabularExplanation):
                 display: block;
                 margin-bottom: 10px;
                 width: fit-content;
-                
+
                 color:#202020;
                 background-color:gold;
                 }
                 </style>
                 """
-                )
+                         )
         display(htmlStyle)
 
-        htmlTitleCRules=HTML('''
+        htmlTitleCRules = HTML('''
             <h3>The predicted value for class <span class='red'>%s</span> is <span class='red'>%s</span>.</h3>
             <h3>It would have been:</h3>
-            '''%(self.expDict['rule']['class_name'], self.expDict['bb_pred'])
-                        )
+            ''' % (self.crules['class_name'])
+                               )
 
         display(htmlTitleCRules)
-        
-        cRulesDiv=''
-        for idx,el in enumerate(self.expDict['crules']):
-            cRulesTitle= el['cons']
-            cRulesSpans=""
-            for p in el['premise']:
-                cRulesSpans+="<span class='crule'>"+p['att'].replace("_"," ")+ " " + p['op']+ " "+ str("%.2f" %p['thr'])+"</span>"
 
-                
+        cRulesDiv = ''
+        for idx, el in enumerate(self.crules):
+            cRulesTitle = el['cons']
+            cRulesSpans = ""
+            for p in el['premise']:
+                cRulesSpans += "<span class='crule'>" + p['att'].replace("_", " ") + " " + p['op'] + " " + str(
+                    "%.2f" % p['thr']) + "</span>"
+
             display(HTML('''
                 <div class='crules'>
                     <div>
@@ -137,8 +146,9 @@ class LoreTabularExplanation(TabularExplanation):
                     </br>%s
                     </div>
                 </div>
-            '''%(cRulesTitle,cRulesSpans))   
-            )
+            ''' % (cRulesTitle, cRulesSpans))
+                    )
+
 
 class LoreTabularExplainer(TabularExplainer):
     lore_explainer = None
@@ -149,20 +159,48 @@ class LoreTabularExplainer(TabularExplainer):
         super().__init__()
         self.bb = bb
 
-    def fit(self, _df: pd.DataFrame, class_name, config):
-        df, feature_names, class_values, numeric_columns, \
-        rdf, real_feature_names, features_map = prepare_dataset(_df, class_name)
-        neigh_type = config['neigh_type'] if 'neigh_type' in config else 'geneticp'
-        size = config['size'] if 'size' in config else 1000
-        ocr = config['ocr'] if 'ocr' in config else 0.1
-        ngen = config['ngen'] if 'ngen' in config else 10
-        self.lore_explainer = LOREM(rdf[real_feature_names].values, self.bb.predict, feature_names, class_name, class_values,
-                               numeric_columns, features_map, neigh_type=neigh_type, categorical_use_prob=True,
-                               continuous_fun_estimation=False, size=size, ocr=ocr, random_state=self.random_state, ngen=ngen,
-                               bb_predict_proba=self.bb.predict_proba, verbose=False)
+    def fit(self, df: pd.DataFrame, class_name, config):
+        """
+
+        Parameters
+        ----------
+        df [DataFrame]: tabular dataset
+        class_name [str]: column that contains the observed class
+        config [dict]: configuration dictionary with the following keys:
 
 
+        Returns
+        -------
 
-    def explain(self, x):
-        exp = self.lore_explainer.explain_instance(x, samples=1000, use_weights=True)
-        return LoreTabularExplanation(exp)
+        """
+        self.class_name = class_name
+        self.dataset = TabularDataset(data=df, class_name=self.class_name)
+        self.dataset.df.dropna(inplace=True)
+
+        # encode dataset
+        self.encoder = TabularEnc(self.dataset.descriptor)
+        self.encoded = []
+        for x in self.dataset.df.iloc:
+            self.encoded.append(encoder.encode(x.values))
+
+        # random generation
+        self.features = [c for c in encoded_df.columns if c != dataset.class_name]
+
+    def explain(self, x: np.array):
+        gen = RandomGenerator()
+        self.neighbour = gen.generate(x, 10000, dataset.descriptor, onehotencoder=encoder)
+
+        # neighbour classification
+        self.neighbour.df[self.class_name] = bbox.predict(neighbour.df[features])
+        self.neighbour.set_class_name(self.class_name)
+
+        # surrogate
+        self.surrogate = DecisionTreeSurrogate()
+        self.surrogate.train(neighbour.df[features].values, neighbour.df['class'])
+
+        self.rule = surrogate.get_rule(x, neighbour, encoder)
+        self.crules, self.deltas = surrogate.get_counterfactual_rules(x=x, class_name=self.class_name,
+                                                                      feature_names=self.features,
+                                                                      neighborhood_dataset=self.neighbour,
+                                                                      encoder=self.encoder)
+
