@@ -155,9 +155,15 @@ class LoreTabularExplainer(TabularExplainer):
     random_state = 0
     bb = None  # The Black Box to be explained
 
-    def __init__(self, bb: AbstractBBox):
+    def __init__(self, bbox: AbstractBBox):
+        """
+        LOREM Explainer for tabular data.
+        Parameters
+        ----------
+        bbox [AbstractBBox]:
+        """
         super().__init__()
-        self.bb = bb
+        self.bbox = bbox
 
     def fit(self, df: pd.DataFrame, class_name, config):
         """
@@ -176,31 +182,31 @@ class LoreTabularExplainer(TabularExplainer):
         self.class_name = class_name
         self.dataset = TabularDataset(data=df, class_name=self.class_name)
         self.dataset.df.dropna(inplace=True)
+        self.config = config
 
         # encode dataset
         self.encoder = TabularEnc(self.dataset.descriptor)
         self.encoded = []
         for x in self.dataset.df.iloc:
-            self.encoded.append(encoder.encode(x.values))
+            self.encoded.append(self.encoder.encode(x.values))
 
         # random generation
-        self.features = [c for c in encoded_df.columns if c != dataset.class_name]
+        self.features = [c for c in self.encoded.columns if c != self.dataset.class_name]
 
     def explain(self, x: np.array):
         gen = RandomGenerator()
-        self.neighbour = gen.generate(x, 10000, dataset.descriptor, onehotencoder=encoder)
+        self.neighbour = gen.generate(x, 10000, self.dataset.descriptor, onehotencoder=self.encoder)
 
         # neighbour classification
-        self.neighbour.df[self.class_name] = bbox.predict(neighbour.df[features])
+        self.neighbour.df[self.class_name] = self.bbox.predict(self.neighbour.df[self.features])
         self.neighbour.set_class_name(self.class_name)
 
         # surrogate
         self.surrogate = DecisionTreeSurrogate()
-        self.surrogate.train(neighbour.df[features].values, neighbour.df['class'])
+        self.surrogate.train(self.neighbour.df[self.features].values, self.neighbour.df['class'])
 
-        self.rule = surrogate.get_rule(x, neighbour, encoder)
-        self.crules, self.deltas = surrogate.get_counterfactual_rules(x=x, class_name=self.class_name,
-                                                                      feature_names=self.features,
-                                                                      neighborhood_dataset=self.neighbour,
-                                                                      encoder=self.encoder)
-
+        self.rule = self.surrogate.get_rule(x, self.neighbour, self.encoder)
+        self.crules, self.deltas = self.surrogate.get_counterfactual_rules(x=x, class_name=self.class_name,
+                                                                           feature_names=self.features,
+                                                                           neighborhood_dataset=self.neighbour,
+                                                                           encoder=self.encoder)
