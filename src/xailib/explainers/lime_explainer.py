@@ -7,7 +7,7 @@ from xailib.models.bbox import AbstractBBox
 from xailib.xailib_tabular import TabularExplainer, TabularExplanation
 from xailib.xailib_image import ImageExplainer
 from xailib.xailib_text import TextExplainer
-from externals.lore.datamanager import prepare_dataset
+from lore_explainer.datamanager import prepare_dataset
 from lime.lime_tabular import LimeTabularExplainer
 from lime.lime_image import LimeImageExplainer
 from lime.lime_text import LimeTextExplainer

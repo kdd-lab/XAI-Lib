@@ -1,0 +1,7 @@
+graft src
+recursive-exclude models *
+recursive-exclude datasets *
+recursive-exclude examples *
+recursive-exclude externals *
+recursive-exclude images *
+global-exclude *.py[co] __pycache__

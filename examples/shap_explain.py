@@ -15,7 +15,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.utils import to_categorical
 
 if __name__ == '__main__':
-    source_file = 'datasets/german_credit.csv'
+    source_file = '../datasets/german_credit.csv'
     class_field = 'default'
     # Load and transform dataset and select one row to classify and explain
     df = pd.read_csv(source_file, skipinitialspace=True, na_values='?', keep_default_na=True)
