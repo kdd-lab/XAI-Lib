@@ -83,6 +83,7 @@ def main():
     start = time.time()
 
     # Use another explainer: LIME
+    inst = df[feature_names].values[18]
     config = {'feature_selection': 'lasso_path', 'discretize_continuous' : True, 'discretizer' : 'decile'}
     logging.info("Configuring and initializing LIME explainer, with config: \n%s", config)
     limeExplainer = LimeXAITabularExplainer(bbox)
