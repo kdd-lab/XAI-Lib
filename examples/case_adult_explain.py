@@ -6,7 +6,7 @@ from lore_explainer.datamanager import prepare_dataset
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from xailib.explainers.lime_explainer import LimeXAITabularExplainer
-from xailib.explainers.lore_explainer import LoreTabularExplainer
+from xailib.explainers.lore_explainer import LegacyLoreTabularExplainer, LoreTabularExplainer
 from xailib.models.sklearn_classifier_wrapper import sklearn_classifier_wrapper
 
 
@@ -48,16 +48,21 @@ def main():
     config = {'neigh_type' : 'geneticp', 'size' : 1000, 'ocr' : 0.1, 'ngen' : 10 }
     logging.info("Configuring and initializing LORE Explainer with configuration %s", config)
     # Create an explainer: LORE
-    explainer = LoreTabularExplainer(bbox)
+    explainer = LegacyLoreTabularExplainer(bbox)
     # let the explainer to scan the training or test set
     explainer.fit(df, class_field, config)
 
-
     logging.info("Building an explanation for the instance")
     exp = explainer.explain(inst)
-    logging.info("The explanation: \n%s", exp.exp)
+    logging.info("The legacy explanation: \n%s", exp.exp)
     end = time.time()
     logging.info("Elapsed time to build the explanation: %s", end- start)
+
+    explainer2 = LoreTabularExplainer(bbox)
+    explainer2.fit(df, class_field, config)
+    exp2 = explainer2.explain(inst)
+    logging.info("The new explanation: \n%s", exp2.exp)
+
 
     start = time.time()
 

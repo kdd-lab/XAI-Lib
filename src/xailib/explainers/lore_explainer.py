@@ -1,9 +1,18 @@
+from lore_sa.encoder_decoder import ColumnTransformerEnc
+from lore_sa.lore import Lore
+from lore_sa.neighgen import GeneticGenerator
+
 from xailib.xailib_tabular import TabularExplainer, TabularExplanation
 from xailib.models.bbox import AbstractBBox
 import pandas as pd
 from lore_explainer.datamanager import prepare_dataset
 from lore_explainer.lorem import LOREM
 from lore_explainer.explanation import ExplanationEncoder
+
+from lore_sa.dataset import TabularDataset
+from lore_sa.neighgen.random import RandomGenerator
+from lore_sa.surrogate import DecisionTreeSurrogate
+
 import json
 from IPython.display import HTML
 
@@ -140,7 +149,7 @@ class LoreTabularExplanation(TabularExplanation):
             '''%(cRulesTitle,cRulesSpans))   
             )
 
-class LoreTabularExplainer(TabularExplainer):
+class LegacyLoreTabularExplainer(TabularExplainer):
     lore_explainer = None
     random_state = 0
     bb = None  # The Black Box to be explained
@@ -161,6 +170,32 @@ class LoreTabularExplainer(TabularExplainer):
                                continuous_fun_estimation=False, size=size, ocr=ocr, random_state=self.random_state, ngen=ngen,
                                bb_predict_proba=self.bb.predict_proba, verbose=False)
 
+
+
+    def explain(self, x):
+        exp = self.lore_explainer.explain_instance(x, samples=1000, use_weights=True)
+        return LoreTabularExplanation(exp)
+
+
+class LoreTabularExplainer(TabularExplainer):
+    lore_explainer = None
+    random_state = 0
+    bb = None  # The Black Box to be explained
+
+    def __init__(self, bb: AbstractBBox):
+        super().__init__()
+        self.bb = bb
+
+    def fit(self, _df: pd.DataFrame, class_name, config):
+        dataset = TabularDataset(_df, class_name)
+        dataset.df.dropna(inplace=True)
+        dataset.update_descriptor()
+
+        enc = ColumnTransformerEnc(dataset.descriptor)
+        generator = GeneticGenerator(self.bbox, dataset, enc)
+        surrogate = DecisionTreeSurrogate()
+
+        self.lore_explainer = Lore(self.bbox, dataset, enc, generator, surrogate)
 
 
     def explain(self, x):
