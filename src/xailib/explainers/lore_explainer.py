@@ -7,12 +7,11 @@ from xailib.models.bbox import AbstractBBox
 import pandas as pd
 from lore_explainer.datamanager import prepare_dataset
 from lore_explainer.lorem import LOREM
-from lore_explainer.explanation import ExplanationEncoder
 
 from lore_sa.dataset import TabularDataset
 from lore_sa.neighgen.random import RandomGenerator
 from lore_sa.surrogate import DecisionTreeSurrogate
-
+from lore_sa.explanation import ExplanationEncoder
 import json
 from IPython.display import HTML
 
@@ -21,7 +20,7 @@ class LoreTabularExplanation(TabularExplanation):
     def __init__(self, lore_exp):
         super().__init__()
         self.exp = lore_exp
-        self.expDict = json.loads(json.dumps(self.exp, cls=ExplanationEncoder))
+        self.expDict = None
         
     def getFeaturesImportance(self):
         return None
@@ -33,10 +32,10 @@ class LoreTabularExplanation(TabularExplanation):
         return None
 
     def getRules(self):
-        return self.expDict['rule']
+        return self.exp['rule']
 
     def getCounterfactualRules(self):
-        return self.expDict['crules']
+        return self.exp['crules']
 
     def plotRules(self):
         htmlStyle=HTML("""
@@ -191,13 +190,18 @@ class LoreTabularExplainer(TabularExplainer):
         dataset.df.dropna(inplace=True)
         dataset.update_descriptor()
 
+        neigh_type = config['neigh_type'] if 'neigh_type' in config else 'geneticp'
+        size = config['size'] if 'size' in config else 1000
+        ocr = config['ocr'] if 'ocr' in config else 0.1
+        ngen = config['ngen'] if 'ngen' in config else 10
+
         enc = ColumnTransformerEnc(dataset.descriptor)
-        generator = GeneticGenerator(self.bbox, dataset, enc)
+        generator = GeneticGenerator(self.bb, dataset, enc) if neigh_type == 'geneticp' else RandomGenerator(self.bb, dataset, enc)
         surrogate = DecisionTreeSurrogate()
 
-        self.lore_explainer = Lore(self.bbox, dataset, enc, generator, surrogate)
+        self.lore_explainer = Lore(self.bb, dataset, enc, generator, surrogate)
 
 
     def explain(self, x):
-        exp = self.lore_explainer.explain_instance(x, samples=1000, use_weights=True)
+        exp = self.lore_explainer.explain(x)
         return LoreTabularExplanation(exp)
