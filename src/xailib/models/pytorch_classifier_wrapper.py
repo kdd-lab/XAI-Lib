@@ -3,10 +3,11 @@ import torch
 import numpy as np
 
 class pytorch_classifier_wrapper(AbstractBBox):
-    def __init__(self, classifier, device = "cpu"):
+    def __init__(self, classifier, device = "cpu", n_features = None):
         super().__init__()
         self.bbox = classifier
         self.device = device
+        self.n_features = n_features
 
     def model(self):
         return self.bbox
@@ -14,6 +15,11 @@ class pytorch_classifier_wrapper(AbstractBBox):
     def prepare_input(self, X):
         if isinstance(X, np.ndarray):
             X = torch.from_numpy(X)
+
+        X = X.float()
+        if self.n_features is not None:
+            X = X.reshape(-1, self.n_features)
+
         X = X.to(self.device)
 
         return X
@@ -23,9 +29,12 @@ class pytorch_classifier_wrapper(AbstractBBox):
 
         with torch.no_grad():
             y = self.bbox(X)
-            y = torch.argmax(y, dim=-1)
+            if y.shape[1] > 1:
+                y = torch.argmax(y, dim=-1)
+            else:
+                y = y > 0.5
 
-            y = y.cpu().numpy()
+            y = y.cpu().int().numpy().flatten()
 
             return y
 
