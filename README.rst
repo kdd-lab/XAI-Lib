@@ -1,57 +1,209 @@
 
-|
-
 =======
 XAI-Lib
 =======
 
+.. image:: https://img.shields.io/pypi/v/XAI-Library.svg
+   :target: https://pypi.org/project/XAI-Library/
+   :alt: PyPI version
 
-An integrated library for explanation methods.
+.. image:: https://img.shields.io/pypi/pyversions/XAI-Library.svg
+   :target: https://pypi.org/project/XAI-Library/
+   :alt: Python versions
 
-A python library to develop explaninable machine learning models. The library provides an integrated interface to setup and execute explanation methods for black boxes.
+.. image:: https://img.shields.io/github/license/kdd-lab/XAI-Lib.svg
+   :target: https://github.com/kdd-lab/XAI-Lib/blob/main/LICENSE
+   :alt: License
 
-The library is designed to be modular and extensible. It provides a simple interface to add new explanation methods and integrate them with the existing ones.
-The starting list of explanation methods includes:
-* For tabular data:
+|
 
-  * SHAP
-  * LIME
-  * Anchors
-  * LORE
+**XAI-Lib** is an integrated Python library for Explainable AI (XAI) that provides a unified interface for various explanation methods. Developed to make machine learning models more interpretable and transparent, XAI-Lib simplifies the process of explaining black-box models across different data types.
 
-* For image data:
+This project is part of the `XAI Project <https://xai-project.eu/>`_ - a European initiative focused on advancing explainable artificial intelligence research and applications.
 
-  * GradCAM
-  * LIME
-  * SHAP
-  * ABELE
+|
 
-* For text data:
+✨ Features
+===========
 
-    * still work-in-progress
+**XAI-Lib** is designed to be **modular**, **extensible**, and **easy to use**. It provides:
 
-* For time series data:
+- 🔌 **Unified Interface**: Simple, consistent API for multiple explanation methods
+- 📊 **Multiple Data Types**: Support for tabular, image, text, and time-series data
+- 🧩 **Extensible Architecture**: Easy integration of new explanation methods
+- 🎯 **Model-Agnostic**: Works with any black-box machine learning model
+- 📚 **Well-Documented**: Comprehensive documentation and examples
 
-    * still work-in-progress
+|
 
+🛠️ Supported Explanation Methods
+==================================
 
-Getting Started
+Tabular Data
+------------
+
+* **SHAP** - SHapley Additive exPlanations
+* **LIME** - Local Interpretable Model-agnostic Explanations
+* **Anchors** - High-precision model-agnostic explanations
+* **LORE** - LOcal Rule-based Explanations
+
+Image Data
+----------
+
+* **GradCAM** - Gradient-weighted Class Activation Mapping
+* **LIME** - Local Interpretable Model-agnostic Explanations
+* **SHAP** - SHapley Additive exPlanations
+* **ABELE** - Adversarial Black-box Explainer generating Latent Exemplars
+
+Text Data
+---------
+
+* 🚧 **Work in Progress** - Coming soon!
+
+Time Series Data
+----------------
+
+* 🚧 **Work in Progress** - Coming soon!
+
+|
+
+📦 Installation
 ===============
-The library can be installed using pip or by cloning the repository.
 
-To install the library using pip, run the following command:
+Install from PyPI
+-----------------
+
+The easiest way to install **XAI-Lib** is using pip:
 
 .. code-block:: bash
 
    pip install XAI-Library
 
+Install from Source
+-------------------
 
-To have access to the latest version of the library, clone the repository and create a virtual environment. Then install the library using the following command:
+For the latest development version, clone the repository and install in editable mode:
 
 .. code-block:: bash
 
-    virtualenv venv
-    source venv/bin/activate
-    pip install -e .
+   git clone https://github.com/kdd-lab/XAI-Lib.git
+   cd XAI-Lib
+   pip install -e .
+
+**Recommended**: Use a virtual environment to avoid dependency conflicts:
+
+.. code-block:: bash
+
+   # Create and activate virtual environment
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Install XAI-Lib
+   pip install -e .
+
+|
+
+🚀 Quick Start
+==============
+
+Here's a simple example of using LIME for tabular data explanation:
+
+.. code-block:: python
+
+   from xailib import Explainer
+   
+   # Initialize your black-box model
+   # model = YourModel()
+   
+   # Create an explainer
+   explainer = Explainer(model, method='lime')
+   
+   # Generate explanation for a sample
+   explanation = explainer.explain(sample_data)
+   
+   # Visualize the explanation
+   explainer.visualize(explanation)
+
+For more examples and detailed usage, please check the `examples/ <https://github.com/kdd-lab/XAI-Lib/tree/main/examples>`_ directory.
+
+|
+
+📖 Documentation
+================
+
+For detailed documentation, tutorials, and API reference, visit:
+
+* **Documentation**: `https://xai-lib.readthedocs.io/ <https://xai-lib.readthedocs.io/>`_
+* **GitHub Repository**: `https://github.com/kdd-lab/XAI-Lib <https://github.com/kdd-lab/XAI-Lib>`_
+* **Issue Tracker**: `https://github.com/kdd-lab/XAI-Lib/issues <https://github.com/kdd-lab/XAI-Lib/issues>`_
+
+|
+
+🤝 Contributing
+===============
+
+We welcome contributions! Please see our `Contributing Guide <CONTRIBUTING.rst>`_ for details on how to:
+
+* Report bugs and request features
+* Submit pull requests
+* Improve documentation
+* Add new explanation methods
+
+|
+
+👥 Authors & Contributors
+==========================
+
+See `AUTHORS.rst <AUTHORS.rst>`_ for a complete list of contributors to this project.
+
+|
+
+📄 License
+==========
+
+This project is licensed under the MIT License - see the `LICENSE <LICENSE.txt>`_ file for details.
+
+|
+
+🙏 Acknowledgments
+==================
+
+This library is developed as part of the **XAI Project** (`https://xai-project.eu/ <https://xai-project.eu/>`_), a European initiative dedicated to advancing explainable artificial intelligence.
+
+The XAI Project aims to:
+
+* Develop new methods for explainable AI
+* Create practical tools for AI transparency
+* Foster collaboration between research and industry
+* Promote responsible AI development
+
+For more information about the XAI Project, visit `https://xai-project.eu/ <https://xai-project.eu/>`_.
+
+|
+
+📧 Contact
+==========
+
+For questions and support:
+
+* **Email**: rinzivillo@isti.cnr.it
+* **Issue Tracker**: `https://github.com/kdd-lab/XAI-Lib/issues <https://github.com/kdd-lab/XAI-Lib/issues>`_
+
+|
+
+⭐ Citation
+===========
+
+If you use **XAI-Lib** in your research, please cite:
+
+.. code-block:: bibtex
+
+   @software{xailib,
+     title = {XAI-Lib: An Integrated Library for Explainable AI},
+     author = {Rinzivillo, Salvatore and Bodria, Francesco and Naretto, Francesca and Guidotti, Riccardo and Fadda, Daniele},
+     year = {2024},
+     url = {https://github.com/kdd-lab/XAI-Lib},
+     note = {Part of the XAI Project (https://xai-project.eu/)}
+   }
 
 
