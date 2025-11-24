@@ -2,25 +2,26 @@
 XAI-Lib
 =======
 
-This is the documentation of **XAI-Lib**.
+Welcome to the documentation of **XAI-Lib** - an integrated Python library for Explainable AI (XAI).
+
+**XAI-Lib** provides a unified interface for various explanation methods, making machine learning models more interpretable and transparent. The library simplifies the process of explaining black-box models across different data types.
 
 .. note::
 
-    This is the main page of your project's `Sphinx`_ documentation.
-    It is formatted in `reStructuredText`_. Add additional pages
-    by creating rst-files in ``docs`` and adding them to the `toctree`_ below.
-    Use then `references`_ in order to link them from this page, e.g.
-    :ref:`authors` and :ref:`changes`.
+    This project is part of the `XAI Project <https://xai-project.eu/>`_ - a European initiative focused on advancing explainable artificial intelligence research and applications.
 
-    It is also possible to refer to the documentation of other Python packages
-    with the `Python domain syntax`_. By default you can reference the
-    documentation of `Sphinx`_, `Python`_, `NumPy`_, `SciPy`_, `matplotlib`_,
-    `Pandas`_, `Scikit-Learn`_. You can add more by extending the
-    ``intersphinx_mapping`` in your Sphinx's ``conf.py``.
+About This Documentation
+========================
 
-    The pretty useful extension `autodoc`_ is activated by default and lets
-    you include documentation from docstrings. Docstrings can be written in
-    `Google style`_ (recommended!), `NumPy style`_ and `classical style`_.
+This documentation is formatted in `reStructuredText`_ and built with `Sphinx`_. It provides comprehensive information about:
+
+- Installation and getting started
+- Available explanation methods
+- API reference
+- Usage examples
+- Contributing guidelines
+
+The documentation uses the `autodoc`_ extension to include documentation from docstrings, which are written in `Google style`_.
 
 
 Contents
@@ -43,6 +44,21 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+Acknowledgments
+===============
+
+This library is developed as part of the **XAI Project** (`https://xai-project.eu/ <https://xai-project.eu/>`_), a European initiative dedicated to advancing explainable artificial intelligence.
+
+The XAI Project aims to:
+
+* Develop new methods for explainable AI
+* Create practical tools for AI transparency
+* Foster collaboration between research and industry
+* Promote responsible AI development
+
+For more information about the XAI Project, visit `https://xai-project.eu/ <https://xai-project.eu/>`_.
 
 .. _toctree: https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html
 .. _reStructuredText: https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html
