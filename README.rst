@@ -189,21 +189,5 @@ For questions and support:
 * **Email**: rinzivillo@isti.cnr.it
 * **Issue Tracker**: `https://github.com/kdd-lab/XAI-Lib/issues <https://github.com/kdd-lab/XAI-Lib/issues>`_
 
-|
-
-⭐ Citation
-===========
-
-If you use **XAI-Lib** in your research, please cite:
-
-.. code-block:: bibtex
-
-   @software{xailib,
-     title = {XAI-Lib: An Integrated Library for Explainable AI},
-     author = {Rinzivillo, Salvatore and Bodria, Francesco and Naretto, Francesca and Guidotti, Riccardo and Fadda, Daniele},
-     year = {2024},
-     url = {https://github.com/kdd-lab/XAI-Lib},
-     note = {Part of the XAI Project (https://xai-project.eu/)}
-   }
 
 
