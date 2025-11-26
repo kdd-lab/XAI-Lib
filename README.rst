@@ -139,7 +139,7 @@ For more examples and detailed usage, please check the `examples/ <https://githu
 For detailed documentation, tutorials, and API reference, visit:
 
 * **GitHub Pages Documentation**: `https://kdd-lab.github.io/XAI-Lib/ <https://kdd-lab.github.io/XAI-Lib/>`_
-* **Read the Docs**: `https://xai-lib.readthedocs.io/ <https://xai-lib.readthedocs.io/>`_
+* **Read the Docs**: `https://xai-lib.readthedocs.io/ <https://xai-lib.readthedocs.io/en/latest/>`_
 * **GitHub Repository**: `https://github.com/kdd-lab/XAI-Lib <https://github.com/kdd-lab/XAI-Lib>`_
 * **Issue Tracker**: `https://github.com/kdd-lab/XAI-Lib/issues <https://github.com/kdd-lab/XAI-Lib/issues>`_
 
