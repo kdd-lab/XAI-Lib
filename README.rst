@@ -178,17 +178,13 @@ This project is licensed under the MIT License - see the `LICENSE <LICENSE.txt>`
 
 |
 
-🙏 Acknowledgments
+Acknowledgments
 ==================
 
 This library is developed as part of the **XAI Project** (`https://xai-project.eu/ <https://xai-project.eu/>`_), a European initiative dedicated to advancing explainable artificial intelligence.
 
-The XAI Project aims to:
+The Xai project focuses on the urgent open challenge of how to construct meaningful explanations of opaque AI/ML systems in the context of ai based decision making, aiming at empowering individual against undesired effects of automated decision making, implementing the right of explanation, helping people make better decisions preserving (and expand) human autonomy.
 
-* Develop new methods for explainable AI
-* Create practical tools for AI transparency
-* Foster collaboration between research and industry
-* Promote responsible AI development
 
 For more information about the XAI Project, visit `https://xai-project.eu/ <https://xai-project.eu/>`_.
 
