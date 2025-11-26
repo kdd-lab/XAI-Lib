@@ -232,6 +232,56 @@ on PyPI_, the following steps can be used to release a new version for
    uploaded to PyPI_ correctly.
 
 
+Deploying Documentation to ReadTheDocs
+--------------------------------------
+
+This project is configured to work with `Read the Docs`_ for automatic
+documentation hosting. To deploy the documentation to ReadTheDocs.io, follow
+these steps:
+
+#. **Create a Read the Docs account**: Go to `readthedocs.org`_ and create an
+   account (you can sign up using your GitHub account).
+
+#. **Import your project**: After logging in, click on "Import a Project" and
+   select the ``XAI-Lib`` repository from your GitHub account. If you don't see
+   it, you may need to refresh your repository list or manually enter the
+   repository URL.
+
+#. **Configure the project**: Read the Docs will automatically detect the
+   ``.readthedocs.yml`` configuration file in the repository root. The
+   configuration specifies:
+
+   - Python version: 3.10
+   - Documentation builder: Sphinx
+   - Configuration file location: ``docs/conf.py``
+   - Additional formats: PDF
+
+#. **Build the documentation**: Once imported, Read the Docs will automatically
+   build the documentation. You can trigger manual builds from the project
+   dashboard.
+
+#. **Enable automatic builds**: By default, Read the Docs will build the
+   documentation on every push to the main branch. You can also configure
+   webhook integration for pull request previews.
+
+#. **Access your documentation**: After a successful build, your documentation
+   will be available at ``https://xai-lib.readthedocs.io/`` (or a similar URL
+   based on your project name).
+
+Additional configuration options include:
+
+- **Versioning**: Read the Docs can build documentation for multiple versions
+  (branches/tags) of your project.
+- **Custom domains**: You can configure a custom domain for your documentation.
+- **Notifications**: Set up build notifications for failures.
+
+For more information, see the `Read the Docs documentation`_.
+
+.. _Read the Docs: https://readthedocs.org/
+.. _readthedocs.org: https://readthedocs.org/
+.. _Read the Docs documentation: https://docs.readthedocs.io/en/stable/
+
+
 
 .. [#contrib1] Even though, these resources focus on open source projects and
    communities, the general ideas behind collaborating with other developers
