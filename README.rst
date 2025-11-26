@@ -58,12 +58,12 @@ Image Data
 Text Data
 ---------
 
-* 🚧 **Work in Progress** - Coming soon!
+* **LIME** - Local Interpretable Model-agnostic Explanations for text classification
 
 Time Series Data
 ----------------
 
-* 🚧 **Work in Progress** - Coming soon!
+* **LASTS** - Local Agnostic Subsequence-based Time Series explanations
 
 |
 
@@ -110,19 +110,24 @@ Here's a simple example of using LIME for tabular data explanation:
 
 .. code-block:: python
 
-   from xailib import Explainer
+   from xailib.explainers.lime_explainer import LimeXAITabularExplainer
+   from xailib.models.sklearn_classifier_wrapper import sklearn_classifier_wrapper
    
-   # Initialize your black-box model
-   # model = YourModel()
+   # Wrap your scikit-learn model
+   bb = sklearn_classifier_wrapper(your_trained_model)
    
-   # Create an explainer
-   explainer = Explainer(model, method='lime')
+   # Create and fit the LIME explainer
+   explainer = LimeXAITabularExplainer(bb)
+   explainer.fit(df, 'target_column', config={
+       'discretize_continuous': True,
+       'feature_selection': 'auto'
+   })
    
-   # Generate explanation for a sample
-   explanation = explainer.explain(sample_data)
+   # Generate explanation for an instance
+   explanation = explainer.explain(instance, num_samples=1000)
    
-   # Visualize the explanation
-   explainer.visualize(explanation)
+   # Visualize feature importance
+   explanation.plot_features_importance()
 
 For more examples and detailed usage, please check the `examples/ <https://github.com/kdd-lab/XAI-Lib/tree/main/examples>`_ directory.
 
@@ -133,9 +138,17 @@ For more examples and detailed usage, please check the `examples/ <https://githu
 
 For detailed documentation, tutorials, and API reference, visit:
 
-* **Documentation**: `https://xai-lib.readthedocs.io/ <https://xai-lib.readthedocs.io/>`_
+* **GitHub Pages Documentation**: `https://kdd-lab.github.io/XAI-Lib/ <https://kdd-lab.github.io/XAI-Lib/>`_
+* **Read the Docs**: `https://xai-lib.readthedocs.io/ <https://xai-lib.readthedocs.io/>`_
 * **GitHub Repository**: `https://github.com/kdd-lab/XAI-Lib <https://github.com/kdd-lab/XAI-Lib>`_
 * **Issue Tracker**: `https://github.com/kdd-lab/XAI-Lib/issues <https://github.com/kdd-lab/XAI-Lib/issues>`_
+
+The documentation includes:
+
+* **Getting Started Guide**: Installation and quick start tutorials
+* **API Reference**: Complete documentation of all classes and methods
+* **Examples**: Practical examples for tabular, image, and text data
+* **Contributing Guide**: How to contribute to the project
 
 |
 
