@@ -65,7 +65,8 @@ class sklearn_classifier_wrapper(AbstractBBox):
         """
         Make class predictions for time series input instances.
 
-        Converts 3D time series input to 2D format before prediction.
+        Converts 3D time series input to 2D format before prediction
+        by selecting only the first feature column (index 0).
 
         Args:
             X: Input time series as a numpy array with 3 dimensions
@@ -74,7 +75,7 @@ class sklearn_classifier_wrapper(AbstractBBox):
         Returns:
             numpy.ndarray: Predicted class labels as a 1D array.
         """
-        # Convert from 3D to 2D by taking first feature dimension
+        # Select first feature column from 3D array: (samples, timesteps, features) -> (samples, timesteps)
         X = X[:, :, 0]
         return self.bbox.predict(X).ravel()
 
@@ -82,7 +83,8 @@ class sklearn_classifier_wrapper(AbstractBBox):
         """
         Get prediction probabilities for time series input instances.
 
-        Converts 3D time series input to 2D format before prediction.
+        Converts 3D time series input to 2D format before prediction
+        by selecting only the first feature column (index 0).
 
         Args:
             X: Input time series as a numpy array with 3 dimensions
@@ -91,6 +93,6 @@ class sklearn_classifier_wrapper(AbstractBBox):
         Returns:
             numpy.ndarray: Predicted class probabilities.
         """
-        # Convert from 3D to 2D by taking first feature dimension
+        # Select first feature column from 3D array: (samples, timesteps, features) -> (samples, timesteps)
         X = X[:, :, 0]
         return self.bbox.predict_proba(X)

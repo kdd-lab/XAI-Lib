@@ -68,7 +68,7 @@ class keras_classifier_wrapper(AbstractBBox):
         """
         Make class predictions for time series input instances.
 
-        For multi-class classification, returns the argmax of the output.
+        For outputs with multiple classes, returns the argmax of the output.
 
         Args:
             X: Input time series as a numpy array with 3 dimensions
@@ -78,7 +78,7 @@ class keras_classifier_wrapper(AbstractBBox):
             numpy.ndarray: Predicted class labels as a 1D array.
         """
         y = self.bbox.predict(X)
-        # For multi-class output, get the argmax
+        # For outputs with multiple classes, get the argmax
         if len(y.shape) > 1 and (y.shape[1] != 1):
             y = np.argmax(y, axis=1)
         return y.ravel()
