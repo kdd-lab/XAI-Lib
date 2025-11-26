@@ -1,3 +1,41 @@
+"""
+Insertion and Deletion metrics for evaluating explanation faithfulness.
+
+This module provides the Insertion and Deletion metrics for evaluating
+how well an explanation captures the important features of a model's
+prediction. These metrics are commonly used for evaluating image
+explanations (saliency maps, heatmaps).
+
+The Insertion metric measures how quickly the model's prediction confidence
+increases as pixels are inserted in order of saliency (most salient first).
+
+The Deletion metric measures how quickly the model's prediction confidence
+decreases as pixels are deleted in order of saliency (most salient first).
+
+Classes:
+    ImageInsDel: Insertion and Deletion metric calculator for images.
+
+References:
+    Petsiuk, V., Das, A., & Saenko, K. (2018). RISE: Randomized Input
+    Sampling for Explanation of Black-box Models. BMVC.
+
+Example:
+    >>> from xailib.metrics.insertiondeletion import ImageInsDel
+    >>> import numpy as np
+    >>>
+    >>> # Define prediction function
+    >>> def predict(img):
+    ...     return model.predict(img)
+    >>>
+    >>> # Create metric instance
+    >>> deletion = ImageInsDel(predict, mode='del', step=100, substrate_fn=lambda x: x*0)
+    >>> insertion = ImageInsDel(predict, mode='ins', step=100, substrate_fn=lambda x: x*0)
+    >>>
+    >>> # Compute scores
+    >>> del_scores = deletion(image, 224, saliency_map)
+    >>> ins_scores = insertion(image, 224, saliency_map)
+"""
+
 from xailib.models.bbox import AbstractBBox
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,15 +43,63 @@ import pandas as pd
 import tensorflow as tf
 import torch
 
+
 class ImageInsDel():
+    """
+    Insertion and Deletion metric calculator for image explanations.
+
+    This class computes the Insertion and Deletion metrics for evaluating
+    the faithfulness of image explanations (saliency maps). The metrics
+    measure how the model's confidence changes as pixels are progressively
+    inserted or deleted in order of their saliency.
+
+    A good explanation should:
+        - Have high Insertion score (confidence quickly increases as
+          salient pixels are inserted)
+        - Have low Deletion score (confidence quickly decreases as
+          salient pixels are deleted)
+
+    The Area Under the Curve (AUC) of these scores can be used as a
+    single summary metric.
+
+    Args:
+        predict (callable): Function that takes a numpy array image and
+            returns prediction probabilities.
+        mode (str): Either 'del' for deletion metric or 'ins' for
+            insertion metric.
+        step (int): Number of pixels modified per iteration.
+        substrate_fn (callable): Function mapping original pixels to
+            baseline pixels (e.g., black pixels, blurred pixels).
+
+    Attributes:
+        predict: The prediction function.
+        mode: The metric mode ('del' or 'ins').
+        step: Number of pixels per step.
+        substrate_fn: The substrate/baseline function.
+
+    Example:
+        >>> # Create deletion metric with black baseline
+        >>> deletion = ImageInsDel(
+        ...     predict=model.predict,
+        ...     mode='del',
+        ...     step=224,  # pixels per step
+        ...     substrate_fn=lambda x: torch.zeros_like(x)  # black baseline
+        ... )
+        >>> scores = deletion(image, size=224, explanation=saliency_map)
+        >>> auc = np.trapz(scores) / len(scores)
+    """
+
     def __init__(self, predict, mode, step, substrate_fn):
-        r"""Create deletion/insertion metric instance.
+        """
+        Create deletion/insertion metric instance.
 
         Args:
-            predict (func): function that takes in input a numpy array and return the prediction.
-            mode (str): 'del' or 'ins'.
-            step (int): number of pixels modified per one iteration.
-            substrate_fn (func): a mapping from old pixels to new pixels.
+            predict (callable): Function that takes a numpy array and
+                returns the prediction probabilities.
+            mode (str): 'del' for deletion or 'ins' for insertion.
+            step (int): Number of pixels modified per one iteration.
+            substrate_fn (callable): A mapping from old pixels to new pixels
+                (e.g., blurring function or constant function).
         """
         assert mode in ['del', 'ins']
         self.predict = predict
