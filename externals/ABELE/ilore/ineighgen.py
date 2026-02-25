@@ -240,8 +240,7 @@ class ImageGeneticAdversarialGeneratorLatent(ImageAdversarialGeneratorLatent):
         # print(Yb[:5])
 
         # lZ_img, Z_img, Yb = self._fix_neigh(lZ_img, Z_img, Yb, class_value)
-
-        Z = np.array(lZ_img)
+        
         if self.scale:
             scaler = MinMaxScaler()
             Z = scaler.fit_transform(Z)
